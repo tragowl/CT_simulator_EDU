@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>CT 영상분석 시뮬레이터 v14.1</title>
+    <title>CT 영상분석 시뮬레이터 v15.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Inter:wght@400;600;700;900&display=swap');
         
         :root {
-            --bg-main: #f1f5f9;
-            --cell-size: clamp(40px, 9vw, 55px);
+            --bg-main: #f8fafc;
+            --cell-size: clamp(42px, 10vw, 58px);
+            --grid-gap: 8px;
         }
 
         html, body {
@@ -22,9 +23,15 @@
         }
 
         .app-header {
-            flex-shrink: 0; padding: 10px 16px; background: rgba(255,255,255,0.8); 
-            backdrop-filter: blur(10px); border-bottom: 1px solid #e2e8f0;
-            display: flex; justify-content: space-between; align-items: center; z-index: 100;
+            flex-shrink: 0; padding: 12px 20px; background: rgba(255,255,255,0.95); 
+            backdrop-filter: blur(15px); border-bottom: 1px solid #e2e8f0;
+            display: flex; justify-content: space-between; align-items: center; z-index: 1000;
+        }
+
+        .copyright-header {
+            font-size: 8px; font-weight: 700; color: #64748b; 
+            line-height: 1.4; letter-spacing: -0.01em;
+            border-left: 2px solid #e2e8f0; padding-left: 12px; margin-left: 12px;
         }
 
         .main-body { 
@@ -33,156 +40,190 @@
         }
 
         .game-viewport {
-            position: relative; display: flex; align-items: center; gap: 16px;
-            padding: 20px; z-index: 100;
+            position: relative; display: flex; align-items: center; gap: 24px;
+            z-index: 100;
         }
 
         .side-control-tower {
-            display: flex; flex-direction: column; gap: 12px;
+            display: flex; flex-direction: column; gap: 12px; align-items: center;
         }
 
         .side-btn {
-            width: 58px; height: 58px; border-radius: 16px;
+            width: 62px; height: 62px; border-radius: 18px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             background: white; border: 2px solid #e2e8f0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer;
         }
-        .side-btn:active { transform: scale(0.9); background: #f8fafc; }
+        .side-btn:active { transform: scale(0.9); background: #f1f5f9; }
         .side-btn.primary { background: #2563eb; border-color: #1d4ed8; color: white; }
-        .side-btn.primary:active { background: #1d4ed8; }
         .side-btn.disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; pointer-events: none; }
-        .side-btn span { font-size: 8px; font-weight: 900; margin-top: 2px; text-transform: uppercase; }
+        .side-btn span { font-size: 9px; font-weight: 900; margin-top: 4px; text-transform: uppercase; }
+
+        .btn-next-large {
+            width: 78px; height: 96px; border-radius: 24px;
+            background: #1e293b; color: white; border: none;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer;
+            animation: bounce-in 0.5s ease;
+        }
+        .btn-next-large:active { transform: scale(0.92); filter: brightness(1.2); }
+        .btn-next-large .angle-tag { 
+            font-size: 16px; font-weight: 900; font-family: 'JetBrains Mono'; 
+            background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 8px; margin-bottom: 6px;
+        }
+        .btn-next-large span { font-size: 11px; font-weight: 900; letter-spacing: 0.05em; color: #94a3b8; }
+
+        @keyframes bounce-in {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
 
         .grid-container {
             display: grid; grid-template-columns: repeat(4, var(--cell-size));
             grid-template-rows: repeat(4, var(--cell-size));
-            gap: 6px; padding: 14px; background: #fff; border-radius: 24px;
-            border: 4px solid #475569; position: relative;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2);
-            transition: all 0.3s;
+            gap: var(--grid-gap); padding: 16px; background: #fff; border-radius: 28px;
+            border: 2px solid #e2e8f0; position: relative;
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1);
+            transition: all 0.4s ease;
         }
-        .grid-container.waiting { opacity: 0.5; filter: blur(1px); pointer-events: none; transform: scale(0.95); }
+        .grid-container.waiting { opacity: 0.6; filter: grayscale(0.5); pointer-events: none; transform: scale(0.96); }
 
         .data-cell { 
-            background: #f8fafc; border-radius: 10px; display: flex; align-items: center; 
-            justify-content: center; border: 1px solid #e2e8f0; transition: all 0.2s;
+            background: #f8fafc; border-radius: 12px; display: flex; align-items: center; 
+            justify-content: center; border: 1px solid #f1f5f9; transition: all 0.2s;
+            width: var(--cell-size); height: var(--cell-size);
         }
-        .data-cell:focus-within { border-color: #2563eb; background: #eff6ff; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .data-cell:focus-within { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 4px rgba(59,130,246,0.1); }
         
         .data-cell input {
             width: 100%; height: 100%; background: transparent; text-align: center; 
-            font-size: 24px; font-weight: 800; color: #1e293b; outline: none; border: none; font-family: 'JetBrains Mono';
+            font-size: 26px; font-weight: 800; color: #1e293b; outline: none; border: none; font-family: 'JetBrains Mono';
         }
-        .data-cell input::placeholder { color: #cbd5e1; }
+        .data-cell input::placeholder { color: #cbd5e1; font-weight: 900; }
 
-        /* 센서 및 가이드 라인 */
         .sensor {
             position: absolute; width: 44px; height: 44px; 
-            background: #ffffff; border: 3px solid currentColor; border-radius: 10px; 
+            background: #ffffff; border: 3px solid currentColor; border-radius: 12px; 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 50; transform: translate(-50%, -50%);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            z-index: 500; transform: translate(-50%, -50%);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .sensor .t-val { font-size: 14px; font-weight: 900; line-height: 1; color: #64748b; }
-        .sensor .c-val { font-size: 12px; font-weight: 800; border-top: 2px solid #f1f5f9; width: 100%; text-align: center; margin-top: 2px; }
+        .sensor .t-val { font-size: 13px; font-weight: 900; line-height: 1.1; color: #64748b; }
+        .sensor .c-val { font-size: 12px; font-weight: 800; border-top: 2px solid #f1f5f9; width: 100%; text-align: center; margin-top: 3px; }
 
         .guide-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        .scan-line { stroke-width: 2; opacity: 0.12; } 
-        .scan-line.highlight { opacity: 0.4; stroke-width: 3; }
+        .scan-line { stroke-width: 2; opacity: 0.1; transition: all 0.5s; } 
+        .scan-line.highlight { opacity: 0.45; stroke-width: 3; }
 
-        .theme-0 { color: #0284c7; stroke: #0284c7; }
-        .theme-45 { color: #db2777; stroke: #db2777; }
-        .theme-90 { color: #059669; stroke: #059669; }
-        .theme-135 { color: #d97706; stroke: #d97706; }
+        .theme-0 { color: #0ea5e9; stroke: #0ea5e9; }
+        .theme-45 { color: #ec4899; stroke: #ec4899; }
+        .theme-90 { color: #10b981; stroke: #10b981; }
+        .theme-135 { color: #f59e0b; stroke: #f59e0b; }
 
         .correct { color: #10b981 !important; }
         .wrong { color: #ef4444 !important; }
 
         #report-overlay {
-            position: fixed; inset: 0; background: #f1f5f9; z-index: 500;
-            display: none; flex-direction: column; overflow-y: auto; padding-bottom: 40px;
+            position: fixed; inset: 0; background: #f8fafc; z-index: 2000;
+            display: none; flex-direction: column; overflow-y: auto; padding: 40px 20px;
         }
 
-        /* 물음표 애니메이션 */
-        @keyframes pulse-q {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.1); }
+        /* Evolution Graph Styles */
+        .evo-grid {
+            display: grid; grid-template-columns: repeat(4, 12px); gap: 2px;
         }
-        .q-placeholder { color: #94a3b8; font-weight: 900; animation: pulse-q 1.5s infinite; }
+        .evo-cell { width: 12px; height: 12px; border-radius: 2px; }
     </style>
 </head>
 <body>
 
     <header class="app-header">
-        <div>
-            <h1 class="text-base font-black italic tracking-tighter text-slate-800 leading-none">CT VIRTUAL LAB 14.1</h1>
-            <p class="text-[8px] font-bold text-slate-400 mt-1 uppercase">Medical Data Reconstruction</p>
+        <div class="flex items-center">
+            <div>
+                <h1 class="text-base font-black italic tracking-tighter text-slate-800 leading-none">CT ANALYZER v15.4</h1>
+                <p class="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Medical Imaging Sim</p>
+            </div>
+            <div class="copyright-header">
+                <p>Copyright © 2024 Kim HyunSeok</p>
+                <p>tragowl@onedu.jje.go.kr</p>
+                <p class="text-[7px] text-blue-500 font-extrabold">영리적목적금지 | 그외 자유롭게 이용가능</p>
+            </div>
         </div>
-        <div class="flex gap-4">
+        <div class="flex gap-6">
             <div class="text-right">
-                <span id="timer-val" class="text-lg font-black font-mono text-slate-700">00:00</span>
-                <span class="block text-[7px] text-slate-400 font-bold uppercase">Time</span>
+                <span id="timer-val" class="text-xl font-black font-mono text-slate-700">00:00</span>
+                <span class="block text-[7px] text-slate-400 font-bold uppercase">Time spent</span>
             </div>
             <div class="text-right">
-                <span id="error-val" class="text-lg font-black text-blue-600">0%</span>
+                <span id="error-val" class="text-xl font-black text-blue-600">0%</span>
                 <span class="block text-[7px] text-slate-400 font-bold uppercase">Accuracy</span>
             </div>
         </div>
     </header>
 
-    <div class="main-body">
+    <div class="main-body" id="viewport">
         <svg class="guide-svg" id="guide-layer"></svg>
         <div id="sensor-layer" class="absolute inset-0 pointer-events-none"></div>
 
         <div class="game-viewport">
-            <!-- 사이드 컨트롤 타워 -->
             <div class="side-control-tower">
                 <div id="btn-random" onclick="generateRandomData()" class="side-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
                     <span>Create</span>
                 </div>
                 <div id="btn-peek" class="side-btn disabled" 
                     onmousedown="peekAnswer(true)" onmouseup="peekAnswer(false)" 
                     ontouchstart="peekAnswer(true)" ontouchend="peekAnswer(false)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                     <span>Peek</span>
                 </div>
                 <div id="btn-start" onclick="startScan()" class="side-btn primary disabled">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 19 7-7-7-7"/><path d="M5 12h14"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 19 7-7-7-7"/><path d="M5 12h14"/></svg>
                     <span>Scan</span>
                 </div>
-                <div id="btn-next" onclick="nextStep()" class="side-btn primary hidden">
-                    <div id="angle-icon-tag" class="text-xs font-black">0°</div>
-                    <span>Next</span>
+                <div id="btn-next" onclick="nextStep()" class="btn-next-large hidden">
+                    <div id="angle-icon-tag" class="angle-tag">0°</div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="mb-1"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    <span>NEXT STEP</span>
                 </div>
             </div>
 
-            <!-- 메인 데이터 그리드 -->
             <div class="grid-container waiting" id="grid"></div>
         </div>
     </div>
 
-    <!-- 결과 레이어 생략 방지 -->
     <div id="report-overlay">
-        <div class="max-w-md mx-auto w-full px-6 py-8">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-black italic text-slate-800 tracking-tighter">RECONSTRUCTION COMPLETE</h2>
-                <div id="final-accuracy" class="text-6xl font-black text-blue-600 my-4">0%</div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Elapsed Time: <span id="final-time">00:00</span></p>
+        <div class="max-w-md mx-auto w-full">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-black italic text-slate-800 tracking-tighter">DIAGNOSIS REPORT</h2>
+                <div id="final-accuracy" class="text-7xl font-black text-blue-600 my-4">0%</div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Time Record: <span id="final-time">00:00</span></p>
             </div>
-            <div class="bg-white rounded-3xl p-5 shadow-lg mb-6 flex justify-around">
+
+            <div class="bg-white rounded-[32px] p-6 shadow-xl mb-6 flex justify-around border border-slate-100">
                 <div class="flex flex-col items-center">
-                    <span class="text-[9px] font-black text-slate-400 uppercase mb-2">Target Data</span>
-                    <div id="mini-target-grid" class="grid grid-cols-4 gap-1"></div>
+                    <span class="text-[9px] font-black text-slate-400 uppercase mb-3">Ground Truth</span>
+                    <div id="mini-target-grid" class="grid grid-cols-4 gap-1.5"></div>
                 </div>
                 <div class="flex flex-col items-center">
-                    <span class="text-[9px] font-black text-slate-400 uppercase mb-2">Your Output</span>
-                    <div id="mini-user-grid" class="grid grid-cols-4 gap-1"></div>
+                    <span class="text-[9px] font-black text-slate-400 uppercase mb-3">Final Result</span>
+                    <div id="mini-user-grid" class="grid grid-cols-4 gap-1.5"></div>
                 </div>
             </div>
-            <div id="history-container" class="space-y-3"></div>
-            <button onclick="location.reload()" class="w-full py-4 bg-slate-800 text-white rounded-2xl font-black text-sm uppercase tracking-widest mt-8 shadow-lg">Reset Simulator</button>
+
+            <div class="mb-2 px-2 flex justify-between items-center">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reconstruction Evolution</h3>
+                <span class="text-[8px] text-slate-300">Accuracy per angle</span>
+            </div>
+            
+            <div id="history-container" class="space-y-2"></div>
+
+            <button onclick="location.reload()" class="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest mt-8 hover:bg-black transition-colors shadow-lg">New Analysis</button>
+            <p class="text-center text-[9px] font-bold text-slate-300 mt-6 uppercase tracking-widest">Copyright © Kim HyunSeok | tragowl@onedu.jje.go.kr</p>
         </div>
     </div>
 
@@ -201,10 +242,10 @@
                 for(let c=0; c<GRID_SIZE; c++) {
                     const cell = document.createElement('div');
                     cell.className = 'data-cell';
+                    cell.id = `cell-${r}-${c}`;
                     const input = document.createElement('input');
                     input.type = 'text'; input.inputMode = 'numeric'; 
                     input.id = `in-${r}-${c}`;
-                    input.placeholder = ""; 
                     input.oninput = (e) => {
                         gridData[r][c] = parseInt(e.target.value) || 0;
                         renderUI();
@@ -217,60 +258,38 @@
         }
 
         function generateRandomData() {
-            // 타겟 데이터 생성
             targetData = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
             for(let r=0; r<GRID_SIZE; r++) for(let c=0; c<GRID_SIZE; c++) targetData[r][c] = Math.floor(Math.random() * 9) + 1;
-            
-            // 그리드 잠금 해제 및 시각적 효과
             const grid = document.getElementById('grid');
             grid.classList.remove('waiting');
-            
-            // 물음표 효과로 데이터가 생성되었음을 암시
             for(let r=0; r<GRID_SIZE; r++) {
                 for(let c=0; c<GRID_SIZE; c++) {
                     const input = document.getElementById(`in-${r}-${c}`);
                     input.placeholder = "?";
-                    input.value = ""; // 기존 값 초기화
+                    input.value = "";
                     gridData[r][c] = 0;
                 }
             }
-
-            // 버튼 활성화
             document.getElementById('btn-peek').classList.remove('disabled');
             document.getElementById('btn-start').classList.remove('disabled');
-            
-            // 버튼 강조 효과
-            const createBtn = document.getElementById('btn-random');
-            createBtn.style.borderColor = '#10b981';
-            createBtn.querySelector('span').innerText = "DONE";
-            setTimeout(() => { createBtn.style.borderColor = '#e2e8f0'; createBtn.querySelector('span').innerText = "RE-CREATE"; }, 1000);
         }
 
         function peekAnswer(show) {
             if (!targetData) return;
             for(let r=0; r<GRID_SIZE; r++) for(let c=0; c<GRID_SIZE; c++) {
                 const input = document.getElementById(`in-${r}-${c}`);
-                if (show) { 
-                    input.dataset.oldVal = input.value; 
-                    input.value = targetData[r][c]; 
-                    input.style.color = '#2563eb';
-                } else { 
-                    input.value = input.dataset.oldVal || ''; 
-                    input.style.color = '#1e293b';
-                }
+                if (show) { input.dataset.oldVal = input.value; input.value = targetData[r][c]; input.style.color = '#2563eb'; }
+                else { input.value = input.dataset.oldVal || ''; input.style.color = '#1e293b'; }
             }
         }
 
         function startScan() {
             if (!targetData) return;
             currentStep = 1;
-            
-            // 사이드 버튼 전환
             document.getElementById('btn-random').classList.add('hidden');
             document.getElementById('btn-peek').classList.add('hidden');
             document.getElementById('btn-start').classList.add('hidden');
             document.getElementById('btn-next').classList.remove('hidden');
-
             startTime = Date.now();
             timerInterval = setInterval(() => {
                 const elapsed = Math.floor((Date.now() - startTime) / 1000);
@@ -280,13 +299,15 @@
         }
 
         function nextStep() {
-            const snapshot = JSON.parse(JSON.stringify(gridData));
-            const metrics = calculateMetrics(snapshot);
-            stepHistory.push({
-                angle: ["0°", "45°", "90°", "135°"][currentStep-1],
-                accuracy: metrics.accuracy
+            const m = calculateMetrics(gridData);
+            // 각 단계의 스냅샷 저장 (시각화용)
+            const snapshot = gridData.map(row => [...row]);
+            stepHistory.push({ 
+                angle: ["0°", "45°", "90°", "135°"][currentStep-1], 
+                accuracy: m.accuracy,
+                data: snapshot 
             });
-
+            
             if(currentStep < 4) { 
                 currentStep++; 
                 renderUI(); 
@@ -295,71 +316,51 @@
             }
         }
 
-        function calculateMetrics(data) {
-            let errorSum = 0, targetSum = 0;
-            for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
-                errorSum += Math.abs((data[r][c] || 0) - targetData[r][c]);
-                targetSum += targetData[r][c];
-            }
-            const accuracy = targetSum === 0 ? 0 : Math.max(0, 100 - (errorSum / targetSum * 100)).toFixed(1);
-            return { accuracy, errorSum };
-        }
-
-        function updateMetrics() {
-            if(!targetData) return;
-            const m = calculateMetrics(gridData);
-            document.getElementById('error-val').innerText = m.accuracy + "%";
-        }
-
         function renderUI() {
             const sLayer = document.getElementById('sensor-layer'), gLayer = document.getElementById('guide-layer');
+            const viewport = document.getElementById('viewport');
             sLayer.innerHTML = ''; gLayer.innerHTML = '';
             if (currentStep === 0) return;
-
-            const angles = ["0°", "45°", "90°", "135°"];
-            document.getElementById('angle-icon-tag').innerText = angles[currentStep-1];
-
-            const gridBox = document.getElementById('grid').getBoundingClientRect();
-            const centerX = gridBox.left + gridBox.width / 2;
-            const centerY = gridBox.top + gridBox.height / 2;
-            
+            const viewRect = viewport.getBoundingClientRect();
+            document.getElementById('angle-icon-tag').innerText = ["0°", "45°", "90°", "135°"][currentStep-1];
             const projections = getProj(gridData), targets = getProj(targetData);
-
+            const getCellCenter = (r, c) => {
+                const el = document.getElementById(`cell-${r}-${c}`);
+                const rect = el.getBoundingClientRect();
+                return { x: rect.left - viewRect.left + rect.width / 2, y: rect.top - viewRect.top + rect.height / 2 };
+            };
             for(let s = 1; s <= currentStep; s++) {
-                let data, target, angleDeg, theme;
-                if(s===1) { data=projections.d0; target=targets.d0; angleDeg=0; theme='theme-0'; }
-                if(s===2) { data=projections.d45; target=targets.d45; angleDeg=45; theme='theme-45'; }
-                if(s===3) { data=projections.d90; target=targets.d90; angleDeg=90; theme='theme-90'; }
-                if(s===4) { data=projections.d135; target=targets.d135; angleDeg=135; theme='theme-135'; }
-
-                const angleRad = (angleDeg - 90) * Math.PI / 180;
-                const orbitRadius = gridBox.width * (0.8 + (s * 0.35));
-
-                for(let i=0; i<data.length; i++) {
-                    const count = data.length;
-                    const spreadScale = (count === 4) ? (gridBox.width / 4) : (gridBox.width / 5.5);
-                    const offset = (i - (count - 1) / 2) * spreadScale;
-
-                    const sX = centerX + orbitRadius * Math.cos(angleRad) + offset * Math.cos(angleRad + Math.PI/2);
-                    const sY = centerY + orbitRadius * Math.sin(angleRad) + offset * Math.sin(angleRad + Math.PI/2);
-                    const eX = centerX - (orbitRadius * 0.9) * Math.cos(angleRad) + offset * Math.cos(angleRad + Math.PI/2);
-                    const eY = centerY - (orbitRadius * 0.9) * Math.sin(angleRad) + offset * Math.sin(angleRad + Math.PI/2);
-
+                let data, target, angleDeg, theme, paths;
+                if(s===1) { data=projections.d0; target=targets.d0; angleDeg=0; theme='theme-0'; paths=getPathIndices(0); }
+                if(s===2) { data=projections.d45; target=targets.d45; angleDeg=45; theme='theme-45'; paths=getPathIndices(45); }
+                if(s===3) { data=projections.d90; target=targets.d90; angleDeg=90; theme='theme-90'; paths=getPathIndices(90); }
+                if(s===4) { data=projections.d135; target=targets.d135; angleDeg=135; theme='theme-135'; paths=getPathIndices(135); }
+                paths.forEach((path, i) => {
+                    const startPos = getCellCenter(path[0].r, path[0].c);
+                    const endPos = getCellCenter(path[path.length-1].r, path[path.length-1].c);
+                    let ux, uy;
+                    if (path.length === 1) { ux = Math.cos((angleDeg - 90) * (Math.PI / 180)); uy = Math.sin((angleDeg - 90) * (Math.PI / 180)); } 
+                    else { const dx = endPos.x - startPos.x, dy = endPos.y - startPos.y, dist = Math.sqrt(dx*dx + dy*dy); ux = dx / dist; uy = dy / dist; }
+                    if(angleDeg === 0) { ux = 0; uy = 1; } if(angleDeg === 90) { ux = 1; uy = 0; }
+                    const extend = 170, sensorMargin = 30;
                     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    line.setAttribute("x1", sX); line.setAttribute("y1", sY);
-                    line.setAttribute("x2", eX); line.setAttribute("y2", eY);
+                    line.setAttribute("x1", startPos.x - ux * extend); line.setAttribute("y1", startPos.y - uy * extend);
+                    line.setAttribute("x2", endPos.x + ux * extend); line.setAttribute("y2", endPos.y + uy * extend);
                     line.setAttribute("class", `scan-line ${theme} ${s === currentStep ? 'highlight' : ''}`);
                     gLayer.appendChild(line);
-                    
                     const div = document.createElement('div');
-                    div.className = `sensor ${theme}`; 
-                    div.style.left = `${sX}px`; div.style.top = `${sY}px`;
-                    
-                    const isCorrect = data[i] === target[i];
-                    div.innerHTML = `<span class="t-val">${target[i]}</span><span class="c-val ${isCorrect ? 'correct' : 'wrong'}">${data[i]}</span>`;
+                    div.className = `sensor ${theme}`; div.style.left = `${endPos.x + ux * (extend + sensorMargin)}px`; div.style.top = `${endPos.y + uy * (extend + sensorMargin)}px`;
+                    div.innerHTML = `<span class="t-val">${target[i]}</span><span class="c-val ${data[i] === target[i] ? 'correct' : 'wrong'}">${data[i]}</span>`;
                     sLayer.appendChild(div);
-                }
+                });
             }
+        }
+
+        function getPathIndices(a) {
+            if(a===0) return [[{r:0,c:0},{r:3,c:0}],[{r:0,c:1},{r:3,c:1}],[{r:0,c:2},{r:3,c:2}],[{r:0,c:3},{r:3,c:3}]];
+            if(a===90) return [[{r:0,c:0},{r:0,c:3}],[{r:1,c:0},{r:1,c:3}],[{r:2,c:0},{r:2,c:3}],[{r:3,c:0},{r:3,c:3}]];
+            if(a===45) return [[{r:0,c:0}],[{r:1,c:0},{r:0,c:1}],[{r:2,c:0},{r:1,c:1},{r:0,c:2}],[{r:3,c:0},{r:2,c:1},{r:1,c:2},{r:0,c:3}],[{r:3,c:1},{r:2,c:2},{r:1,c:3}],[{r:3,c:2},{r:2,c:3}],[{r:3,c:3}]];
+            if(a===135) return [[{r:3,c:0}],[{r:2,c:0},{r:3,c:1}],[{r:1,c:0},{r:2,c:1},{r:3,c:2}],[{r:0,c:0},{r:1,c:1},{r:2,c:2},{r:3,c:3}],[{r:0,c:1},{r:1,c:2},{r:2,c:3}],[{r:0,c:2},{r:1,c:3}],[{r:0,c:3}]];
         }
 
         function getProj(d) {
@@ -372,41 +373,71 @@
             return p;
         }
 
+        function calculateMetrics(data) {
+            let errorSum = 0, targetSum = 0;
+            for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
+                errorSum += Math.abs((data[r][c] || 0) - (targetData ? targetData[r][c] : 0));
+                targetSum += (targetData ? targetData[r][c] : 0);
+            }
+            return { accuracy: targetSum === 0 ? 0 : Math.max(0, 100 - (errorSum / targetSum * 100)).toFixed(1) };
+        }
+
+        function updateMetrics() {
+            if(!targetData) return;
+            document.getElementById('error-val').innerText = calculateMetrics(gridData).accuracy + "%";
+        }
+
         function showFinalReport() {
             clearInterval(timerInterval);
             const m = calculateMetrics(gridData);
             document.getElementById('final-accuracy').innerText = m.accuracy + "%";
             document.getElementById('final-time').innerText = document.getElementById('timer-val').innerText;
-
-            createMiniGrid('mini-target-grid', targetData, 22);
-            createMiniGrid('mini-user-grid', gridData, 22);
-
+            
+            createMiniGrid('mini-target-grid', targetData);
+            createMiniGrid('mini-user-grid', gridData);
+            
             const hCont = document.getElementById('history-container');
             hCont.innerHTML = '';
+            
             stepHistory.forEach((step) => {
                 const card = document.createElement('div');
-                card.className = 'bg-white rounded-2xl p-4 flex items-center justify-between border border-slate-100 shadow-sm';
+                card.className = 'bg-white rounded-2xl p-3 flex items-center justify-between border border-slate-100 shadow-sm';
+                
+                // 각 단계별 그리드 상태 시각화 (미니 도트 그리드)
+                let evoHtml = `<div class="evo-grid">`;
+                for(let r=0; r<4; r++) {
+                    for(let c=0; c<4; c++) {
+                        const val = step.data[r][c];
+                        const opacity = val ? Math.min(1, val/9) : 0.05;
+                        const color = val === targetData[r][c] ? '#10b981' : '#cbd5e1';
+                        evoHtml += `<div class="evo-cell" style="background: ${color}; opacity: ${opacity + 0.1}"></div>`;
+                    }
+                }
+                evoHtml += `</div>`;
+
                 card.innerHTML = `
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-4">
                         <div class="bg-slate-800 text-white w-8 h-8 rounded-lg flex items-center justify-center font-black text-[10px]">${step.angle}</div>
-                        <div class="text-[10px] font-bold text-slate-400">Sectional Precision</div>
+                        ${evoHtml}
                     </div>
-                    <div class="text-lg font-black text-slate-800">${step.accuracy}%</div>
+                    <div class="text-right">
+                        <div class="text-xs font-black text-slate-800">${step.accuracy}%</div>
+                        <div class="text-[7px] font-bold text-slate-400 uppercase">Step Accuracy</div>
+                    </div>
                 `;
                 hCont.appendChild(card);
             });
             document.getElementById('report-overlay').style.display = 'flex';
         }
 
-        function createMiniGrid(id, data, size) {
-            const c = document.getElementById(id); c.innerHTML = '';
-            for(let r=0; r<4; r++) for(let c_idx=0; c_idx<4; c_idx++) {
-                const v = data[r][c_idx], div = document.createElement('div');
-                div.style.width = `${size}px`; div.style.height = `${size}px`;
-                div.className = 'bg-slate-50 border border-slate-200 rounded-md flex items-center justify-center font-bold text-[10px]';
-                div.innerText = v || '0'; 
-                if(targetData && v !== targetData[r][c_idx]) div.style.color = '#ef4444';
-                c.appendChild(div);
+        function createMiniGrid(id, data) {
+            const container = document.getElementById(id); container.innerHTML = '';
+            for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
+                const div = document.createElement('div');
+                div.className = 'w-6 h-6 bg-slate-50 border border-slate-200 rounded-md flex items-center justify-center font-bold text-[10px]';
+                div.innerText = data[r][c] || '0'; 
+                if(targetData && data[r][c] === targetData[r][c]) div.classList.add('text-green-600');
+                container.appendChild(div);
             }
         }
 
