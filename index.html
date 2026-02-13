@@ -21,7 +21,7 @@
             color: #0f172a; font-family: 'Inter', sans-serif;
         }
 
-        /* 상단 바 - 저작권 및 비영리 허용 문구 */
+        /* 상단 바 */
         .app-header {
             position: fixed; top: 0; left: 0; right: 0; height: 56px;
             padding: 0 16px; background: rgba(255,255,255,0.98); 
@@ -54,8 +54,8 @@
         .control-btn span { font-size: 8px; font-weight: 800; margin-top: 2px; text-transform: uppercase; }
         .control-btn .angle-badge { font-size: 10px; font-weight: 900; background: rgba(255,255,255,0.2); padding: 1px 4px; border-radius: 4px; }
 
-        /* 그리드 래퍼 */
-        .grid-wrapper { position: relative; margin-left: 85px; z-index: 100; }
+        /* 그리드 래퍼 - 왼쪽으로 더 당김 (기존 85px -> 70px) */
+        .grid-wrapper { position: relative; margin-left: 70px; z-index: 100; }
         .grid-container {
             display: grid; grid-template-columns: repeat(4, var(--cell-size));
             grid-template-rows: repeat(4, var(--cell-size));
@@ -105,7 +105,6 @@
             letter-spacing: 0.1em; margin-bottom: 12px; display: block; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;
         }
 
-        /* 리포트 내 그리드 크기 확대 */
         .report-grid {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; width: 100%; max-width: 140px;
         }
@@ -197,7 +196,6 @@
                 </div>
             </div>
 
-            <!-- 최종 결과 비교: 상단에 크게 배치 -->
             <div class="bg-slate-50 rounded-3xl p-6 mb-10 border border-slate-200 shadow-sm">
                 <span class="report-section-title">Final Reconstruction Comparison</span>
                 <div class="flex justify-between gap-4 items-center">
@@ -216,13 +214,12 @@
             </div>
 
             <span class="report-section-title">Evolutionary Step Analysis</span>
-            <div id="history-container" class="space-y-6">
-                <!-- 단계별 카드들이 여기에 큼직하게 들어감 -->
-            </div>
+            <div id="history-container" class="space-y-6"></div>
 
             <div class="mt-12 space-y-3 text-center">
                 <button onclick="location.reload()" class="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl active:scale-[0.98] transition-transform">Start New Diagnosis</button>
-                <p class="text-[9px] font-bold text-slate-400 uppercase">© 2024 Kim HyunSeok | All Rights Reserved for Non-Commercial Education</p>
+                <!-- 연도 2026으로 변경 -->
+                <p class="text-[9px] font-bold text-slate-400 uppercase">© 2026 Kim HyunSeok | All Rights Reserved for Non-Commercial Education</p>
             </div>
         </div>
     </div>
@@ -380,21 +377,14 @@
             clearInterval(timerInterval);
             document.getElementById('final-accuracy').innerText = calculateMetrics(gridData).accuracy + "%";
             document.getElementById('final-time').innerText = document.getElementById('timer-val').innerText;
-            
-            // 상단 최종 비교 그리드 생성 (크게)
             createBigGrid('mini-target-grid', targetData, true);
             createBigGrid('mini-user-grid', gridData, false);
-            
             const hCont = document.getElementById('history-container');
             hCont.innerHTML = '';
-            
-            // 단계별 분석 히스토리 생성 (큼직하게 1:1 비교 카드 형태)
             stepHistory.forEach((s, idx) => {
                 const card = document.createElement('div');
                 card.className = 'step-compare-card';
-                
                 const themeColor = ['#0ea5e9', '#ec4899', '#10b981', '#f59e0b'][idx];
-                
                 card.innerHTML = `
                     <div class="flex justify-between items-center mb-4">
                         <div class="flex items-center gap-2">
@@ -415,12 +405,9 @@
                     </div>
                 `;
                 hCont.appendChild(card);
-                
-                // 카드 내부 그리드 채우기
                 createStepGrid(`hist-target-${idx}`, targetData, true);
                 createStepGrid(`hist-user-${idx}`, s.data, false);
             });
-            
             document.getElementById('report-overlay').style.display = 'flex';
         }
 
