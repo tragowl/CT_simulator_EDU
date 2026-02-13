@@ -11,7 +11,7 @@
         :root {
             --bg-main: #f8fafc;
             --cell-size: clamp(38px, 9vw, 50px);
-            --grid-gap: 6px;
+            --grid-gap: 8px;
         }
 
         html, body {
@@ -21,11 +21,11 @@
             color: #0f172a; font-family: 'Inter', sans-serif;
         }
 
-        /* 상단 바 */
+        /* Header */
         .app-header {
             position: fixed; top: 0; left: 0; right: 0; height: 56px;
             padding: 0 16px; background: rgba(255,255,255,0.98); 
-            backdrop-filter: blur(10px); border-bottom: 1px solid #e2e8f0;
+            backdrop-filter: blur(10px); border-bottom: 2px solid #e2e8f0;
             display: flex; justify-content: space-between; align-items: center; z-index: 1000;
         }
 
@@ -34,39 +34,39 @@
             display: flex; align-items: center; justify-content: flex-start;
         }
 
-        /* 좌측 컨트롤 타워 */
+        /* Control Tower */
         .control-tower {
             position: absolute; top: 72px; left: 16px; 
-            display: flex; flex-direction: column; gap: 8px; z-index: 1000;
+            display: flex; flex-direction: column; gap: 10px; z-index: 1000;
         }
 
         .control-btn {
             width: 52px; height: 52px; border-radius: 14px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: white; border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            transition: all 0.2s; cursor: pointer;
+            background: white; border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 0px #e2e8f0;
+            transition: all 0.1s; cursor: pointer;
         }
-        .control-btn:active { transform: scale(0.95); background: #f1f5f9; }
-        .control-btn.primary { background: #2563eb; border-color: #1d4ed8; color: white; }
-        .control-btn.next-step { background: #0f172a; border-color: #000; color: white; height: 64px; }
+        .control-btn:active { transform: translateY(2px); box-shadow: 0 1px 0px #e2e8f0; }
+        .control-btn.primary { background: #2563eb; border-color: #1d4ed8; color: white; box-shadow: 0 4px 0px #1d4ed8; }
+        .control-btn.next-step { background: #0f172a; border-color: #000; color: white; height: 64px; box-shadow: 0 4px 0px #000; }
         .control-btn.disabled { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
         .control-btn span { font-size: 8px; font-weight: 800; margin-top: 2px; text-transform: uppercase; }
         .control-btn .angle-badge { font-size: 10px; font-weight: 900; background: rgba(255,255,255,0.2); padding: 1px 4px; border-radius: 4px; }
 
-        /* 그리드 래퍼 - 시각적 중심을 왼쪽으로 이동 */
-        .grid-wrapper { position: relative; margin-left: 70px; z-index: 100; }
+        /* Grid */
+        .grid-wrapper { position: relative; margin-left: 80px; z-index: 100; }
         .grid-container {
             display: grid; grid-template-columns: repeat(4, var(--cell-size));
             grid-template-rows: repeat(4, var(--cell-size));
-            gap: var(--grid-gap); padding: 12px; background: #fff; border-radius: 18px;
-            border: 1px solid #e2e8f0; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05);
+            gap: var(--grid-gap); padding: 14px; background: #fff; border-radius: 20px;
+            border: 2px solid #e2e8f0; box-shadow: 0 15px 30px -5px rgba(0,0,0,0.08);
         }
         .grid-container.waiting { opacity: 0.5; }
 
         .data-cell { 
-            background: #f8fafc; border-radius: 8px; display: flex; align-items: center; 
-            justify-content: center; border: 1px solid #f1f5f9; width: var(--cell-size); height: var(--cell-size);
+            background: #f8fafc; border-radius: 10px; display: flex; align-items: center; 
+            justify-content: center; border: 1.5px solid #e2e8f0; width: var(--cell-size); height: var(--cell-size);
         }
         
         .data-cell input {
@@ -74,39 +74,67 @@
             font-size: 22px; font-weight: 800; color: #1e293b; outline: none; border: none; font-family: 'JetBrains Mono';
         }
 
-        /* 센서 및 스캔 라인 */
+        /* Themes */
+        .theme-0 { --theme-color: #0ea5e9; }
+        .theme-45 { --theme-color: #ec4899; }
+        .theme-90 { --theme-color: #10b981; }
+        .theme-135 { --theme-color: #f59e0b; }
+
+        /* Sensors */
         .sensor {
-            position: absolute; width: 36px; height: 36px; 
-            background: #ffffff; border: 2.5px solid currentColor; border-radius: 9px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: absolute; width: 42px; height: 42px; 
+            border-radius: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 500; transform: translate(-50%, -50%);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 3px solid var(--theme-color);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .sensor .t-val { font-size: 11px; font-weight: 900; line-height: 1; color: #64748b; }
-        .sensor .c-val { font-size: 10px; font-weight: 800; border-top: 1px solid #f1f5f9; width: 100%; text-align: center; margin-top: 2px; }
+
+        .sensor.correct {
+            background-color: var(--theme-color);
+            box-shadow: 0 0 15px var(--theme-color);
+            color: white; scale: 1.05;
+        }
+        .sensor.correct .t-val { color: rgba(255,255,255,0.85); }
+        .sensor.correct .c-val { border-top: 1.5px solid rgba(255,255,255,0.3); color: white; }
+
+        .sensor.wrong {
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            color: var(--theme-color);
+        }
+        .sensor.wrong .t-val { color: #64748b; }
+        .sensor.wrong .c-val { border-top: 1.5px solid #f1f5f9; color: #ef4444; font-weight: 900; }
+
+        .sensor .t-val { font-size: 12px; font-weight: 900; line-height: 1; }
+        .sensor .c-val { font-size: 11px; font-weight: 800; width: 85%; text-align: center; margin-top: 2px; padding-top: 1px; }
 
         .guide-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        .scan-line { stroke-width: 1.5; opacity: 0.1; } 
-        .scan-line.highlight { opacity: 0.5; stroke-width: 2.5; }
+        .scan-line { stroke: var(--theme-color); stroke-width: 2.5; opacity: 0.15; } 
+        .scan-line.highlight { opacity: 0.6; stroke-width: 4; }
 
-        .theme-0 { color: #0ea5e9; stroke: #0ea5e9; }
-        .theme-45 { color: #ec4899; stroke: #ec4899; }
-        .theme-90 { color: #10b981; stroke: #10b981; }
-        .theme-135 { color: #f59e0b; stroke: #f59e0b; }
-
+        /* Report Overlay */
         #report-overlay {
             position: fixed; inset: 0; background: #ffffff; z-index: 2000;
             display: none; flex-direction: column; overflow-y: auto; padding: 24px 16px;
         }
 
         .report-section-title {
-            font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase;
-            letter-spacing: 0.1em; margin-bottom: 12px; display: block; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;
+            font-size: 11px; font-weight: 900; color: #94a3b8; text-transform: uppercase;
+            letter-spacing: 0.1em; margin-bottom: 12px; display: block; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px;
         }
 
         .step-compare-card {
-            background: #f8fafc; border-radius: 20px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 16px;
+            background: #f8fafc; border-radius: 20px; padding: 18px; border: 1.5px solid #e2e8f0; margin-bottom: 16px;
         }
+
+        /* Error Highlights in Report */
+        .diff-indicator {
+            position: absolute; top: -4px; right: -4px;
+            font-size: 9px; font-weight: 900; padding: 1px 4px;
+            border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .diff-plus { background: #fee2e2; color: #ef4444; }
+        .diff-minus { background: #dcfce7; color: #10b981; }
     </style>
 </head>
 <body>
@@ -115,11 +143,11 @@
         <div class="flex flex-col">
             <div class="flex items-center gap-2">
                 <h1 class="text-xs font-black italic text-slate-800 uppercase tracking-tighter">CT Simulator v15.9</h1>
-                <div class="h-2 w-[1px] bg-slate-300"></div>
+                <div class="h-3 w-[1px] bg-slate-300"></div>
                 <span class="text-[9px] font-bold text-slate-600 uppercase">© Kim HyunSeok</span>
             </div>
             <p class="text-[8px] font-bold text-blue-600 font-mono tracking-tight leading-none mt-0.5">
-                tragowl@onedu.jje.go.kr <span class="text-slate-400 ml-1">| NON-COMMERCIAL USE PERMITTED</span>
+                tragowl@onedu.jje.go.kr <span class="text-slate-400 ml-1">| Educational Edition</span>
             </p>
         </div>
         <div class="flex gap-4 items-center">
@@ -140,22 +168,22 @@
 
         <div class="control-tower">
             <div id="btn-random" onclick="generateRandomData()" class="control-btn" title="새로운 환자 데이터">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
                 <span>New</span>
             </div>
             <div id="btn-peek" class="control-btn disabled" title="정답 데이터 확인"
                 onmousedown="peekAnswer(true)" onmouseup="peekAnswer(false)" 
                 ontouchstart="peekAnswer(true)" ontouchend="peekAnswer(false)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                 <span>Peek</span>
             </div>
             <div id="btn-start" onclick="startScan()" class="control-btn primary disabled" title="CT 스캐닝 시작">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 19 7-7-7-7"/><path d="M5 12h14"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m12 19 7-7-7-7"/><path d="M5 12h14"/></svg>
                 <span>Start</span>
             </div>
             <div id="btn-next" onclick="nextStep()" class="control-btn next-step hidden" title="다음 측정 각도로 이동">
                 <span id="angle-icon-tag" class="angle-badge">0°</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m9 18 6-6-6-6"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><path d="m9 18 6-6-6-6"/></svg>
                 <span>Next</span>
             </div>
         </div>
@@ -165,16 +193,14 @@
         </div>
     </div>
 
-    <!-- 진단 리포트 오버레이 -->
+    <!-- Report Overlay -->
     <div id="report-overlay">
         <div class="max-w-xl mx-auto w-full pb-20">
-            <div class="text-center mb-10">
+            <div class="text-center mb-10 mt-6">
                 <span class="text-[10px] font-black text-blue-500 tracking-[0.3em] uppercase">Final Analysis</span>
                 <h2 class="text-4xl font-black italic text-slate-900 tracking-tighter mt-1">DIAGNOSIS REPORT</h2>
-                <div class="flex justify-center items-baseline gap-2 mt-4">
-                    <span id="final-accuracy" class="text-7xl font-black text-blue-600">0%</span>
-                </div>
-                <div class="flex justify-center gap-6 mt-4">
+                <div id="final-accuracy" class="text-7xl font-black text-blue-600 mt-4">0%</div>
+                <div class="flex justify-center gap-6 mt-6">
                     <div class="text-center">
                         <p class="text-[9px] font-bold text-slate-400 uppercase">Duration</p>
                         <p id="final-time" class="text-sm font-black text-slate-700 font-mono">00:00</p>
@@ -182,23 +208,23 @@
                     <div class="h-8 w-[1px] bg-slate-200"></div>
                     <div class="text-center">
                         <p class="text-[9px] font-bold text-slate-400 uppercase">Status</p>
-                        <p class="text-sm font-black text-slate-700 uppercase">Complete</p>
+                        <p class="text-sm font-black text-slate-700 uppercase">Analysis Complete</p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-slate-50 rounded-3xl p-6 mb-10 border border-slate-200 shadow-sm">
+            <div class="bg-slate-50 rounded-3xl p-6 mb-10 border-2 border-slate-100">
                 <span class="report-section-title">Final Reconstruction Comparison</span>
                 <div class="flex justify-between gap-4 items-center">
                     <div class="flex-1 flex flex-col items-center">
-                        <span class="text-[9px] font-black text-slate-500 mb-3 uppercase">Ground Truth (Actual)</span>
+                        <span class="text-[9px] font-black text-slate-500 mb-3 uppercase">Actual Data</span>
                         <div id="mini-target-grid" class="grid grid-cols-4 gap-2 w-full max-w-[160px]"></div>
                     </div>
                     <div class="w-8 flex justify-center opacity-20">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 8L22 12L18 16"/><path d="M2 12H22"/></svg>
                     </div>
                     <div class="flex-1 flex flex-col items-center">
-                        <span class="text-[9px] font-black text-blue-600 mb-3 uppercase">Your Diagnosis</span>
+                        <span class="text-[9px] font-black text-blue-600 mb-3 uppercase">Your Result</span>
                         <div id="mini-user-grid" class="grid grid-cols-4 gap-2 w-full max-w-[160px]"></div>
                     </div>
                 </div>
@@ -207,9 +233,8 @@
             <span class="report-section-title">Evolutionary Step Analysis</span>
             <div id="history-container" class="space-y-6"></div>
 
-            <div class="mt-12 space-y-3 text-center">
+            <div class="mt-12 space-y-3">
                 <button onclick="location.reload()" class="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl active:scale-[0.98] transition-transform">Start New Diagnosis</button>
-                <p class="text-[9px] font-bold text-slate-400 uppercase">© 2026 Kim HyunSeok | All Rights Reserved for Non-Commercial Education</p>
             </div>
         </div>
     </div>
@@ -244,21 +269,16 @@
         }
 
         function generateRandomData() {
-            // 기본 1~4 사이의 낮은 밀도 값 생성
             targetData = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0).map(() => Math.floor(Math.random() * 4) + 1));
-            
-            // 중앙 4칸 좌표: (1,1), (1,2), (2,1), (2,2)
             const centers = [[1,1], [1,2], [2,1], [2,2]];
-            // 중앙 4칸 중 3칸을 무작위로 선택하여 7~9 사이의 큰 숫자로 교체
             const selectedIdx = [];
             while(selectedIdx.length < 3) {
                 const r = Math.floor(Math.random() * 4);
                 if(!selectedIdx.includes(r)) selectedIdx.push(r);
             }
-            
             selectedIdx.forEach(idx => {
                 const [r, c] = centers[idx];
-                targetData[r][c] = Math.floor(Math.random() * 3) + 7; // 7, 8, 9 중 하나
+                targetData[r][c] = Math.floor(Math.random() * 3) + 7;
             });
 
             document.getElementById('grid').classList.remove('waiting');
@@ -328,7 +348,7 @@
                     if(angle === 0) { dx = 0; dy = 1; }
                     if(angle === 90) { dx = 1; dy = 0; }
 
-                    const ext = 140, sm = 28;
+                    const ext = 145, sm = 30;
                     const x1 = pStart.x - dx * ext, y1 = pStart.y - dy * ext;
                     const x2 = pEnd.x + dx * ext, y2 = pEnd.y + dy * ext;
 
@@ -338,10 +358,11 @@
                     gLayer.appendChild(line);
 
                     const snsr = document.createElement('div');
-                    snsr.className = `sensor ${theme}`;
+                    const isMatch = proj[i] === targ[i];
+                    snsr.className = `sensor ${theme} ${isMatch ? 'correct' : 'wrong'}`;
                     snsr.style.left = `${pEnd.x + dx * (ext + sm)}px`;
                     snsr.style.top = `${pEnd.y + dy * (ext + sm)}px`;
-                    snsr.innerHTML = `<span class="t-val">${targ[i]}</span><span class="c-val ${proj[i] === targ[i] ? 'correct' : 'wrong'}">${proj[i]}</span>`;
+                    snsr.innerHTML = `<span class="t-val">${targ[i]}</span><span class="c-val">${proj[i]}</span>`;
                     sLayer.appendChild(snsr);
                 });
             }
@@ -383,8 +404,10 @@
             clearInterval(timerInterval);
             document.getElementById('final-accuracy').innerText = calculateMetrics(gridData).accuracy + "%";
             document.getElementById('final-time').innerText = document.getElementById('timer-val').innerText;
+            
             createBigGrid('mini-target-grid', targetData, true);
             createBigGrid('mini-user-grid', gridData, false);
+            
             const hCont = document.getElementById('history-container');
             hCont.innerHTML = '';
             stepHistory.forEach((s, idx) => {
@@ -401,7 +424,7 @@
                     </div>
                     <div class="flex justify-between gap-4">
                         <div class="flex-1 flex flex-col items-center">
-                            <span class="text-[8px] font-bold text-slate-400 mb-2 uppercase">Actual Pattern</span>
+                            <span class="text-[8px] font-bold text-slate-400 mb-2 uppercase">Actual</span>
                             <div class="grid grid-cols-4 gap-1.5 w-full" id="hist-target-${idx}"></div>
                         </div>
                         <div class="flex-1 flex flex-col items-center">
@@ -421,9 +444,27 @@
             const cont = document.getElementById(id); cont.innerHTML = '';
             for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
                 const d = document.createElement('div');
-                const isCorrect = data[r][c] === targetData[r][c];
-                d.className = `aspect-square border-2 rounded-lg flex items-center justify-center font-black text-lg font-mono ${isTarget ? 'bg-slate-50 border-slate-300 text-slate-800' : (isCorrect ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-500 text-red-700')}`;
-                d.innerText = data[r][c] || '0'; cont.appendChild(d);
+                d.className = 'relative aspect-square border-2 rounded-lg flex items-center justify-center font-black text-lg font-mono';
+                
+                const val = data[r][c] || 0;
+                const tgt = targetData[r][c];
+                const diff = val - tgt;
+
+                if (isTarget) {
+                    d.classList.add('bg-slate-50', 'border-slate-300', 'text-slate-800');
+                } else if (diff === 0) {
+                    d.classList.add('bg-green-50', 'border-green-500', 'text-green-700');
+                } else {
+                    d.classList.add('bg-red-50', 'border-red-500', 'text-red-700');
+                    const badge = document.createElement('span');
+                    badge.className = `diff-indicator ${diff > 0 ? 'diff-plus' : 'diff-minus'}`;
+                    badge.innerText = diff > 0 ? `+${diff}` : diff;
+                    d.appendChild(badge);
+                }
+                
+                const text = document.createTextNode(val);
+                d.appendChild(text);
+                cont.appendChild(d);
             }
         }
 
@@ -431,9 +472,22 @@
             const cont = document.getElementById(id); cont.innerHTML = '';
             for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
                 const d = document.createElement('div');
-                const isCorrect = data[r][c] === targetData[r][c];
-                d.className = `aspect-square border rounded-md flex items-center justify-center font-black text-xs font-mono ${isTarget ? 'bg-slate-100 border-slate-200 text-slate-500' : (isCorrect ? 'bg-white border-green-400 text-green-600' : 'bg-white border-slate-200 text-slate-800 opacity-60')}`;
-                d.innerText = data[r][c] || '0'; cont.appendChild(d);
+                d.className = 'relative aspect-square border rounded-md flex items-center justify-center font-black text-xs font-mono';
+                
+                const val = data[r][c] || 0;
+                const tgt = targetData[r][c];
+                const diff = val - tgt;
+
+                if (isTarget) {
+                    d.classList.add('bg-slate-100', 'border-slate-200', 'text-slate-500');
+                } else if (diff === 0) {
+                    d.classList.add('bg-white', 'border-green-400', 'text-green-600');
+                } else {
+                    d.classList.add('bg-red-50', 'border-red-300', 'text-red-600');
+                }
+                
+                d.innerText = val;
+                cont.appendChild(d);
             }
         }
 
