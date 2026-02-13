@@ -1,227 +1,202 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <!-- 모바일 핀치줌 허용 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CT 영상분석원리 시뮬레이터 v9.4</title>
+<script src="https://cdn.tailwindcss.com"></script>
 
-    <title>CT 영상분석원리 시뮬레이터 v9.4</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Inter:wght@400;600;700;900&display=swap');
 
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
+:root{
+    --bg-main:#f8fafc;
+    --bg-card:#ffffff;
+    --border-color:#e2e8f0;
+    --cell-size:clamp(38px,8vw,55px);
+    --mini-cell-size:clamp(20px,5vw,30px);
+    --micro-cell-size:20px;
+    --text-main:#0f172a;
+}
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Inter:wght@400;600;700;900&display=swap');
+/* ===== 핵심 수정 포인트 ===== */
+html, body{
+    height:100%;
+}
 
-        :root {
-            --bg-main: #f8fafc;
-            --bg-card: #ffffff;
-            --border-color: #e2e8f0;
-            --cell-size: clamp(38px, 8vw, 55px);
-            --mini-cell-size: clamp(20px, 5vw, 30px);
-            --micro-cell-size: 20px;
-            --text-main: #0f172a;
-        }
+body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:var(--bg-main);
+    color:var(--text-main);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden; /* 페이지 자체 스크롤 금지 */
+}
 
-        /* 🔒 body는 항상 고정 (CT 좌표 안정) */
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+/* 상단/하단 제외한 정확한 게임 영역 */
+.main-body{
+    flex:1;
+    display:flex;
+    overflow:hidden;
+}
 
-        .credits-bar {
-            background: #0f172a;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 9px;
-            padding: 6px 20px;
-            font-weight: 600;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-shrink: 0;
-        }
+/* 모바일에서 하단 버튼 커질 때 대비 */
+@media (max-width:768px){
+    .main-body{
+        flex:1;
+    }
+}
 
-        .credits-bar a {
-            color: #ffffff;
-            text-decoration: underline;
-        }
+.credits-bar{
+    background:#0f172a;
+    color:rgba(255,255,255,0.7);
+    font-size:9px;
+    padding:6px 20px;
+    font-weight:600;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-shrink:0;
+}
 
-        .app-header {
-            padding: 12px 20px;
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-        }
+.app-header{
+    padding:12px 20px;
+    background:#fff;
+    border-bottom:1px solid var(--border-color);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-shrink:0;
+}
 
-        .main-body {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
+.app-footer{
+    padding:15px 20px;
+    background:#fff;
+    border-top:1px solid var(--border-color);
+    flex-shrink:0;
+}
 
-        .info-panel {
-            width: 300px;
-            padding: 24px;
-            border-right: 1px solid var(--border-color);
-            background: #ffffff;
-            overflow-y: auto;
-            display: none;
-            flex-direction: column;
-            gap: 20px;
-        }
+.info-panel{
+    width:300px;
+    padding:24px;
+    border-right:1px solid var(--border-color);
+    background:#fff;
+    overflow-y:auto;
+    display:none;
+}
 
-        @media (min-width: 1024px) {
-            .info-panel {
-                display: flex;
-            }
-        }
+@media(min-width:1024px){
+    .info-panel{display:block;}
+}
 
-        .main-viewport {
-            flex: 1;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            padding: 20px;
-        }
+.info-card{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:20px;
+}
 
-        .app-footer {
-            padding: 15px 20px;
-            background: var(--bg-card);
-            border-top: 1px solid var(--border-color);
-            flex-shrink: 0;
-        }
+.main-viewport{
+    flex:1;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
 
-        /* 🔑 모바일 전용 레이아웃 처리 */
-        @media (max-width: 768px) {
-            .main-body {
-                flex-direction: column;
-            }
+.grid-container{
+    display:grid;
+    grid-template-columns:repeat(4,var(--cell-size));
+    grid-template-rows:repeat(4,var(--cell-size));
+    gap:6px;
+    padding:10px;
+    background:#f1f5f9;
+    border-radius:12px;
+    border:2px solid #cbd5e1;
+    z-index:10;
+}
 
-            .main-viewport {
-                flex: 0 0 auto;
-            }
+.data-cell{
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
 
-            .app-footer {
-                position: relative;
-            }
-        }
+.data-cell input{
+    width:100%;
+    height:100%;
+    text-align:center;
+    font-size:18px;
+    font-weight:800;
+    border:none;
+    outline:none;
+    background:transparent;
+    font-family:'JetBrains Mono';
+}
 
-        /* === 게임 UI === */
+.guide-svg{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+}
 
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(4, var(--cell-size));
-            grid-template-rows: repeat(4, var(--cell-size));
-            gap: 6px;
-            padding: 10px;
-            background: #f1f5f9;
-            border-radius: 12px;
-            border: 2px solid #cbd5e1;
-            position: relative;
-            z-index: 5;
-        }
+.sensor{
+    position:absolute;
+    width:44px;
+    height:44px;
+    background:#fff;
+    border:2px solid currentColor;
+    border-radius:8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    z-index:20;
+}
 
-        .data-cell {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+.scan-line{
+    stroke-width:1.5;
+    stroke-dasharray:4 2;
+    opacity:.4;
+}
 
-        .data-cell input {
-            width: 100%;
-            height: 100%;
-            border: none;
-            outline: none;
-            text-align: center;
-            font-size: 18px;
-            font-weight: 800;
-            font-family: 'JetBrains Mono';
-        }
+.theme-0{color:#0284c7;stroke:#0284c7;}
+.theme-45{color:#c026d3;stroke:#c026d3;}
+.theme-90{color:#059669;stroke:#059669;}
+.theme-135{color:#d97706;stroke:#d97706;}
 
-        .h-low { background: #e0f2fe !important; }
-        .h-mid { background: #fef08a !important; }
-        .h-high { background: #fecaca !important; }
-
-        .guide-svg {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .scan-line {
-            stroke-width: 1.5;
-            stroke-dasharray: 4 2;
-            opacity: 0.4;
-        }
-
-        .scan-line.active {
-            stroke-width: 2.5;
-            stroke-dasharray: none;
-            opacity: 0.9;
-        }
-
-        .sensor {
-            position: absolute;
-            width: 44px;
-            height: 44px;
-            background: #ffffff;
-            border: 2px solid currentColor;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-family: 'JetBrains Mono';
-            z-index: 10;
-        }
-
-        .theme-0 { color: #0284c7; stroke: #0284c7; }
-        .theme-45 { color: #c026d3; stroke: #c026d3; }
-        .theme-90 { color: #059669; stroke: #059669; }
-        .theme-135 { color: #d97706; stroke: #d97706; }
-    </style>
+.h-low{background:#e0f2fe!important;}
+.h-mid{background:#fef08a!important;}
+.h-high{background:#fecaca!important;}
+</style>
 </head>
 
 <body>
 
 <div class="credits-bar">
-    <div>© 2026 HYUNSEOK KIM</div>
-    <div>교육·연구용 자유 배포 / 상업적 이용 금지</div>
+    <span>© 2026 HYUNSEOK KIM · Educational & Non-Commercial Use</span>
+    <span>tragowl@onedu.jje.go.kr</span>
 </div>
 
 <header class="app-header">
     <div>
-        <h1 class="font-black">CT 영상분석 시뮬레이터</h1>
-        <p class="text-xs text-slate-400">v9.4 Precision Diagnostic</p>
+        <h1 class="font-black italic">CT 영상분석 시뮬레이터</h1>
+        <p class="text-xs text-slate-400 font-bold">v9.4 Precision Diagnostic</p>
     </div>
-    <div class="font-mono font-bold" id="timer-val">00:00</div>
 </header>
 
 <div class="main-body">
-
     <aside class="info-panel">
-        <p class="text-sm">
-            외부에서 측정된 <b>투영 합</b>을 이용해<br>
-            내부 밀도 분포를 복원하세요.
-        </p>
+        <div class="info-card">
+            <b>📌 시뮬레이션 목표</b><br>
+            외부 합산 데이터를 통해 내부 밀도 복원
+        </div>
     </aside>
 
     <main class="main-viewport" id="viewport">
@@ -229,60 +204,28 @@
         <div class="grid-container" id="grid"></div>
         <div id="sensor-container"></div>
     </main>
-
 </div>
 
 <footer class="app-footer">
-    <button onclick="startScan()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black">
-        진단 시작
+    <button class="w-full py-3 rounded-xl bg-slate-900 text-white font-bold">
+        다음 투영 데이터 스캔
     </button>
 </footer>
 
 <script>
-const GRID = 4;
-let step = 0;
-let gridData = Array(GRID).fill().map(()=>Array(GRID).fill(0));
+const GRID_SIZE=4;
+const grid=document.getElementById("grid");
 
-function init() {
-    const grid = document.getElementById('grid');
-    grid.innerHTML = '';
-    for(let r=0;r<GRID;r++){
-        for(let c=0;c<GRID;c++){
-            const cell = document.createElement('div');
-            cell.className = 'data-cell';
-            const input = document.createElement('input');
-            input.oninput = e=>{
-                let v = parseInt(e.target.value)||0;
-                gridData[r][c]=v;
-                cell.className='data-cell '+heat(v);
-                render();
-            };
-            cell.appendChild(input);
-            grid.appendChild(cell);
-        }
+for(let r=0;r<GRID_SIZE;r++){
+    for(let c=0;c<GRID_SIZE;c++){
+        const cell=document.createElement("div");
+        cell.className="data-cell";
+        const input=document.createElement("input");
+        input.type="number";
+        cell.appendChild(input);
+        grid.appendChild(cell);
     }
 }
-
-function heat(v){
-    if(v>=7) return 'h-high';
-    if(v>=4) return 'h-mid';
-    if(v>=1) return 'h-low';
-    return '';
-}
-
-function startScan(){
-    step = 1;
-    render();
-}
-
-function render(){
-    const svg = document.getElementById('guide-layer');
-    const sensors = document.getElementById('sensor-container');
-    svg.innerHTML='';
-    sensors.innerHTML='';
-}
-
-init();
 </script>
 
 </body>
