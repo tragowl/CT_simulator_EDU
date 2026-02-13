@@ -36,7 +36,7 @@
 
         /* Control Tower */
         .control-tower {
-            position: absolute; top: 72px; left: 16px; 
+            position: absolute; top: 72px; left: 12px; 
             display: flex; flex-direction: column; gap: 10px; z-index: 1000;
         }
 
@@ -54,8 +54,8 @@
         .control-btn span { font-size: 8px; font-weight: 800; margin-top: 2px; text-transform: uppercase; }
         .control-btn .angle-badge { font-size: 10px; font-weight: 900; background: rgba(255,255,255,0.2); padding: 1px 4px; border-radius: 4px; }
 
-        /* Grid */
-        .grid-wrapper { position: relative; margin-left: 80px; z-index: 100; }
+        /* Grid - 왼쪽 여백을 80px에서 70px로 줄여 공간 확보 */
+        .grid-wrapper { position: relative; margin-left: 70px; z-index: 100; }
         .grid-container {
             display: grid; grid-template-columns: repeat(4, var(--cell-size));
             grid-template-rows: repeat(4, var(--cell-size));
@@ -348,7 +348,8 @@
                     if(angle === 0) { dx = 0; dy = 1; }
                     if(angle === 90) { dx = 1; dy = 0; }
 
-                    const ext = 145, sm = 30;
+                    // ext 값을 145에서 130으로 줄여 센서가 화면 밖으로 덜 나가게 조정
+                    const ext = 130, sm = 28;
                     const x1 = pStart.x - dx * ext, y1 = pStart.y - dy * ext;
                     const x2 = pEnd.x + dx * ext, y2 = pEnd.y + dy * ext;
 
