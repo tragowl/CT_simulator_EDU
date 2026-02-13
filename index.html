@@ -1,222 +1,570 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CT 영상분석원리 시뮬레이터 v9.4</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CT 영상분석원리 시뮬레이터 v9.4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Inter:wght@400;600;700;900&display=swap');
+        
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --cell-size: clamp(38px, 8vw, 55px);
+            --mini-cell-size: clamp(20px, 5vw, 30px);
+            --micro-cell-size: 20px;
+            --text-main: #0f172a;
+        }
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Inter:wght@400;600;700;900&display=swap');
+        body { 
+            background-color: var(--bg-main); 
+            color: var(--text-main); 
+            font-family: 'Inter', sans-serif; 
+            overflow: hidden; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            touch-action: manipulation;
+        }
 
-html, body {
-    height: 100%;
-}
+        .credits-bar {
+            background: #0f172a;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 9px;
+            padding: 6px 20px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .credits-bar a { color: #ffffff; text-decoration: underline; text-underline-offset: 2px; }
 
-:root {
-    --bg-main: #f8fafc;
-    --bg-card: #ffffff;
-    --border-color: #e2e8f0;
-    --cell-size: clamp(38px, 8vw, 55px);
-    --mini-cell-size: clamp(20px, 5vw, 30px);
-    --micro-cell-size: 20px;
-    --text-main: #0f172a;
-}
+        .app-header {
+            padding: 12px 20px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-body {
-    background-color: var(--bg-main);
-    color: var(--text-main);
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;   /* 프레임 고정 */
-}
+        .main-body { flex-grow: 1; display: flex; overflow: hidden; }
 
-/* ===== 상단 ===== */
-.credits-bar {
-    background: #0f172a;
-    color: rgba(255,255,255,0.7);
-    font-size: 9px;
-    padding: 6px 20px;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-}
+        .info-panel {
+            width: 300px; padding: 24px; border-right: 1px solid var(--border-color); background: #ffffff;
+            overflow-y: auto; display: none; flex-direction: column; gap: 20px;
+        }
+        @media (min-width: 1024px) { .info-panel { display: flex; } }
 
-.app-header {
-    padding: 12px 20px;
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border-color);
-    flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+        .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; }
+        .info-title { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
+        .info-text { font-size: 12px; color: #334155; line-height: 1.6; }
 
-/* ===== 메인 ===== */
-.main-body {
-    flex: 1 1 auto;
-    min-height: 0;        /* ★ 중요 */
-    display: flex;
-    overflow: hidden;
-}
+        .main-viewport { flex-grow: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 20px; }
 
-.info-panel {
-    width: 300px;
-    padding: 24px;
-    border-right: 1px solid var(--border-color);
-    background: #ffffff;
-    overflow-y: auto;
-    display: none;
-}
-@media (min-width: 1024px) {
-    .info-panel { display: block; }
-}
+        .app-footer {
+            padding: 15px 20px; background: var(--bg-card); border-top: 1px solid var(--border-color);
+            flex-shrink: 0; z-index: 100;
+        }
 
-/* ⭐ 여기만 스크롤 */
-.main-viewport {
-    flex: 1;
-    min-height: 0;        /* ★ 중요 */
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    -webkit-overflow-scrolling: touch;
-}
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, var(--cell-size));
+            grid-template-rows: repeat(4, var(--cell-size));
+            gap: 6px; padding: 10px; background: #f1f5f9; border-radius: 12px;
+            border: 2px solid #cbd5e1; z-index: 10; position: relative;
+        }
 
-/* ===== 하단 ===== */
-.app-footer {
-    padding: 15px 20px;
-    background: var(--bg-card);
-    border-top: 1px solid var(--border-color);
-    flex-shrink: 0;       /* ★ 항상 보이게 */
-}
+        .data-cell {
+            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        .data-cell input {
+            width: 100%; height: 100%; background: transparent;
+            text-align: center; font-size: 18px; font-weight: 800;
+            color: #1e293b; outline: none; border: none; font-family: 'JetBrains Mono';
+        }
 
-/* ===== 기존 스타일 유지 ===== */
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(4, var(--cell-size));
-    grid-template-rows: repeat(4, var(--cell-size));
-    gap: 6px;
-    padding: 10px;
-    background: #f1f5f9;
-    border-radius: 12px;
-    border: 2px solid #cbd5e1;
-}
+        .peek-mode .data-cell input { color: #d946ef !important; }
+        .mystery-mode .data-cell input { color: #cbd5e1 !important; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-.data-cell {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+        .sensor {
+            position: absolute; width: 44px; height: 44px; background: #ffffff;
+            border: 2px solid currentColor; border-radius: 8px; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 20; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s;
+        }
+        
+        .sensor.active { transform: scale(1.1); z-index: 30; }
+        .sensor .t-val { font-size: 12px; color: #0f172a; font-weight: 800; line-height: 1; }
+        .sensor .c-val { font-size: 10px; font-weight: 600; color: #64748b; border-top: 1px solid #e2e8f0; width: 80%; text-align: center; margin-top: 2px; }
 
-.data-cell input {
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    text-align: center;
-    font-size: 18px;
-    font-weight: 800;
-    border: none;
-    outline: none;
-    font-family: 'JetBrains Mono';
-}
+        .guide-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+        .scan-line { stroke-width: 1.5; stroke-dasharray: 4 2; transition: 0.3s; opacity: 0.4; } 
+        .scan-line.active { stroke-width: 2.5; stroke-dasharray: none; opacity: 0.8; } 
 
-.guide-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-}
-</style>
+        #report-overlay {
+            position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 500;
+            display: none; flex-direction: column; padding: 20px; overflow-y: auto;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .h-low { background: #e0f2fe !important; }
+        .h-mid { background: #fef08a !important; }
+        .h-high { background: #fecaca !important; }
+
+        .data-cell input, .mini-cell, .micro-cell { color: #1e293b !important; font-weight: 900; }
+        .correct { color: #059669 !important; }
+        .wrong { color: #dc2626 !important; }   
+        
+        .theme-0 { color: #0284c7; stroke: #0284c7; }
+        .theme-45 { color: #c026d3; stroke: #c026d3; }
+        .theme-90 { color: #059669; stroke: #059669; }
+        .theme-135 { color: #d97706; stroke: #d97706; }
+
+        .btn-action { @apply w-full py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest transition-all active:scale-95 shadow-sm border border-transparent; }
+        
+        .mini-grid {
+            display: grid; grid-template-columns: repeat(4, var(--mini-cell-size));
+            grid-template-rows: repeat(4, var(--mini-cell-size));
+            gap: 3px; background: #cbd5e1; padding: 6px; border-radius: 12px;
+        }
+        .mini-cell {
+            width: var(--mini-cell-size); height: var(--mini-cell-size); border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-family: 'JetBrains Mono'; border: 1px solid transparent;
+        }
+
+        .micro-grid {
+            display: grid; grid-template-columns: repeat(4, var(--micro-cell-size));
+            grid-template-rows: repeat(4, var(--micro-cell-size));
+            gap: 2px; background: #e2e8f0; padding: 4px; border-radius: 8px; margin: 0 auto;
+        }
+        .micro-cell {
+            width: var(--micro-cell-size); height: var(--micro-cell-size); border-radius: 2px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 8px; font-family: 'JetBrains Mono';
+        }
+
+        .cell-error { border-color: #ef4444; position: relative; background: #fee2e2 !important; }
+        .timer-badge { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+
+        .stat-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .stat-table th { @apply text-slate-400 font-bold uppercase py-2 border-b border-slate-100 text-left; }
+        .stat-table td { @apply py-3 border-b border-slate-50 font-semibold; font-family: 'JetBrains Mono'; }
+    </style>
 </head>
-
 <body>
 
-<div class="credits-bar">
-    <div>© 2026 HYUNSEOK KIM</div>
-    <div>[ 교육/연구용 | 비상업 ]</div>
-</div>
-
-<header class="app-header">
-    <div>
-        <h1 class="text-base font-black">CT 영상분석 시뮬레이터</h1>
-        <p class="text-[9px] text-slate-400 font-bold">v9.4</p>
-    </div>
-    <div class="flex gap-4">
-        <div>
-            <span id="timer-val">00:00</span>
-        </div>
-        <div>
-            <span id="error-val">0%</span>
+    <div class="credits-bar">
+        <div>&copy; 2026 HYUNSEOK KIM. <span class="hidden sm:inline">All Rights Reserved.</span></div>
+        <div class="flex gap-4">
+            <span>[ 교육/연구용 자유 배포 허용 | 상업적 이용 금지 ]</span>
+            <span class="hidden md:inline">Email: <a href="mailto:tragowl@onedu.jje.go.kr">tragowl@onedu.jje.go.kr</a></span>
         </div>
     </div>
-</header>
 
-<div class="main-body">
-    <aside class="info-panel">
-        <p class="text-sm">설명 패널</p>
-    </aside>
+    <header class="app-header">
+        <div>
+            <h1 class="text-base font-black italic text-slate-800 leading-none">CT 영상분석 시뮬레이터</h1>
+            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">v9.4 Precision Diagnostic</p>
+        </div>
+        <div class="flex gap-4">
+            <div class="text-right">
+                <span id="timer-val" class="text-lg font-black text-slate-800 timer-badge">00:00</span>
+                <span class="block text-[8px] text-slate-400 font-bold uppercase">Time</span>
+            </div>
+            <div class="text-right">
+                <span id="error-val" class="text-lg font-black text-slate-800">0%</span>
+                <span class="block text-[8px] text-slate-400 font-bold uppercase">Accuracy</span>
+            </div>
+        </div>
+    </header>
 
-    <main class="main-viewport" id="viewport">
-        <svg class="guide-svg" id="guide-layer"></svg>
-        <div class="grid-container" id="grid"></div>
-        <div id="sensor-container"></div>
-    </main>
-</div>
+    <div class="main-body">
+        <aside class="info-panel">
+            <div class="info-card bg-blue-50 border-blue-100">
+                <h3 class="info-title text-blue-500">📌 시뮬레이션 목표</h3>
+                <p class="info-text">외부에서 측정된 <strong>합산 데이터</strong>를 역추적하여, 보이지 않는 내부의 <strong>밀도 값(1~9)</strong>을 복원하세요.</p>
+            </div>
+            <div class="info-card">
+                <h3 class="info-title">🔍 센서 읽는 법</h3>
+                <p class="info-text mb-2"><strong>위:</strong> 정답 합계 / <strong>아래:</strong> 현재 합계</p>
+                <p class="info-text text-slate-400">일치하면 <span class="text-emerald-500 font-bold">초록색</span>으로 변합니다.</p>
+            </div>
+        </aside>
 
-<footer class="app-footer">
-    <div id="setup-controls" class="flex gap-2">
-        <button id="peek-btn" class="w-12 h-12 border rounded hidden"
-            onmousedown="peekAnswer(true)"
-            onmouseup="peekAnswer(false)"
-            ontouchstart="peekAnswer(true)"
-            ontouchend="peekAnswer(false)">👁</button>
-
-        <button onclick="generateRandomData()" class="border px-4 py-2 flex-1">
-            데이터 랜덤 생성
-        </button>
-
-        <button onclick="startScan()" class="bg-blue-600 text-white px-4 py-2 flex-1">
-            진단 시작
-        </button>
+        <main class="main-viewport" id="viewport">
+            <svg class="guide-svg" id="guide-layer"></svg>
+            <div class="grid-container" id="grid"></div>
+            <div id="sensor-container"></div>
+        </main>
     </div>
-</footer>
 
-<script>
-/* ===== 기존 JS 그대로 ===== */
-const GRID_SIZE = 4;
-let gridData = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+    <!-- 결과 리포트 -->
+    <div id="report-overlay">
+        <div class="flex flex-col items-center gap-5 py-6 max-w-2xl mx-auto w-full">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mb-1"></div>
+            <h2 class="text-xl font-black text-slate-800 uppercase tracking-tighter">최종 진단 분석 보고서</h2>
+            
+            <div class="w-full bg-white rounded-2xl border border-slate-200 p-6 shadow-xl">
+                <div class="flex justify-between items-end mb-6 border-b border-slate-100 pb-4">
+                    <div class="text-left">
+                        <div id="final-accuracy" class="text-6xl font-black text-emerald-500">0%</div>
+                        <p class="text-[10px] text-slate-400 font-black tracking-widest uppercase mt-1">Diagnostic Accuracy</p>
+                    </div>
+                    <div class="text-right pb-1">
+                        <div id="final-time" class="text-xl font-bold text-amber-500 font-mono">00:00</div>
+                        <p class="text-[8px] text-slate-500 font-bold uppercase">Total Time spent</p>
+                    </div>
+                </div>
 
-const grid = document.getElementById('grid');
-for (let r=0;r<4;r++){
-  for(let c=0;c<4;c++){
-    const cell=document.createElement('div');
-    cell.className='data-cell';
-    const input=document.createElement('input');
-    cell.appendChild(input);
-    grid.appendChild(cell);
-  }
-}
+                <div class="mb-8">
+                    <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">Precision Error Analysis (오차 정밀 분석)</h3>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 overflow-hidden">
+                        <table class="stat-table">
+                            <thead>
+                                <tr>
+                                    <th>Scan Stage</th>
+                                    <th>Total Error</th>
+                                    <th>RMSD</th>
+                                    <th>Accuracy</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stat-table-body">
+                                <!-- JS로 주입됨 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-[9px] text-slate-400 mt-2">* RMSD: Root Mean Square Deviation (낮을수록 정확)</p>
+                </div>
 
-function generateRandomData(){
-    document.getElementById('peek-btn').classList.remove('hidden');
-}
-function peekAnswer(){}
-function startScan(){
-    alert('진단 시작 정상');
-}
-</script>
+                <div class="mb-8">
+                    <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">Reconstruction Timeline (복원 과정)</h3>
+                    <div id="history-container" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                </div>
 
+                <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">Grid Comparison (최종 비교)</h3>
+                <div class="grid grid-cols-2 gap-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="flex flex-col items-center gap-2">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Target (Ground Truth)</span>
+                        <div id="mini-target-grid" class="mini-grid"></div>
+                    </div>
+                    <div class="flex flex-col items-center gap-2">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">User Result</span>
+                        <div id="mini-user-grid" class="mini-grid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-restart" class="btn-action bg-slate-900 text-white mt-4 shadow-xl shadow-slate-200">새로운 진단 시작</button>
+        </div>
+    </div>
+
+    <footer class="app-footer flex flex-col items-center gap-3">
+        <div id="setup-controls" class="w-full flex gap-2">
+            <button id="peek-btn" class="w-12 h-12 flex items-center justify-center bg-white border border-slate-200 text-slate-400 rounded-xl hover:bg-slate-50 active:scale-95 transition-all shadow-sm hidden" 
+                onmousedown="peekAnswer(true)" onmouseup="peekAnswer(false)" 
+                ontouchstart="peekAnswer(true)" ontouchend="peekAnswer(false)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <button onclick="generateRandomData()" class="btn-action bg-white text-slate-600 border border-slate-200 flex-1 hover:bg-slate-50">데이터 랜덤 생성</button>
+            <button onclick="startScan()" class="btn-action bg-blue-600 text-white flex-1 hover:bg-blue-500 shadow-md shadow-blue-200">진단 시작 (복원)</button>
+        </div>
+        <div id="scan-controls" class="hidden w-full">
+            <button id="main-action-btn" onclick="nextStep()" class="btn-action bg-slate-900 text-white flex justify-between px-6 items-center shadow-lg shadow-slate-300 hover:bg-slate-800">
+                <span id="btn-text" class="font-black">다음 투영 데이터 스캔</span>
+                <span id="angle-tag" class="bg-white/20 px-2 py-0.5 rounded text-[10px] font-mono">0°</span>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        const GRID_SIZE = 4;
+        let step = 0;
+        let gridData = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+        let targetData = null;
+        let userHistory = []; 
+        let timerInterval;
+        let startTime;
+
+        function init() {
+            const gridEl = document.getElementById('grid');
+            gridEl.innerHTML = '';
+            for(let r=0; r<GRID_SIZE; r++) {
+                for(let c=0; c<GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'data-cell';
+                    const input = document.createElement('input');
+                    input.type = 'text'; input.inputMode = 'numeric'; 
+                    input.id = `in-${r}-${c}`;
+                    input.oninput = (e) => updateValue(r, c, e.target.value);
+                    cell.appendChild(input);
+                    gridEl.appendChild(cell);
+                }
+            }
+            document.getElementById('btn-restart').addEventListener('click', () => window.location.reload());
+        }
+
+        function updateValue(r, c, val) {
+            if (val === '?') return;
+            let num = parseInt(val);
+            if (isNaN(num)) num = 0;
+            if (num > 9) num = 9; 
+            gridData[r][c] = num;
+            const input = document.getElementById(`in-${r}-${c}`);
+            if (!isNaN(parseInt(val)) && input.value != num) input.value = num;
+            input.parentElement.className = 'data-cell ' + getHeatmapClass(num);
+            renderStep();
+            updateMetrics();
+        }
+
+        function getHeatmapClass(v) {
+            if(v >= 7) return 'h-high';
+            if(v >= 4) return 'h-mid';
+            if(v >= 1) return 'h-low';
+            return '';
+        }
+
+        function generateRandomData() {
+            targetData = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+            const centers = [[1,1], [1,2], [2,1], [2,2]];
+            const excludeIdx = Math.floor(Math.random() * 4);
+            for(let r=0; r<GRID_SIZE; r++) {
+                for(let c=0; c<GRID_SIZE; c++) {
+                    let v = centers.some((pos, idx) => idx !== excludeIdx && pos[0]===r && pos[1]===c) 
+                            ? Math.floor(Math.random() * 3) + 7 
+                            : Math.floor(Math.random() * 3) + 1;
+                    targetData[r][c] = v;
+                }
+            }
+            document.getElementById('grid').classList.add('mystery-mode');
+            for(let r=0; r<GRID_SIZE; r++) {
+                for(let c=0; c<GRID_SIZE; c++) {
+                    gridData[r][c] = 0;
+                    const input = document.getElementById(`in-${r}-${c}`);
+                    input.value = '?'; 
+                    input.parentElement.className = 'data-cell'; 
+                }
+            }
+            document.getElementById('peek-btn').classList.remove('hidden');
+        }
+
+        function peekAnswer(show) {
+            if (!targetData) return;
+            const gridEl = document.getElementById('grid');
+            if (show) {
+                gridEl.classList.add('peek-mode');
+                gridEl.classList.remove('mystery-mode'); 
+                for(let r=0; r<GRID_SIZE; r++) {
+                    for(let c=0; c<GRID_SIZE; c++) {
+                        const input = document.getElementById(`in-${r}-${c}`);
+                        if (input.value !== '?') input.dataset.userVal = input.value;
+                        input.value = targetData[r][c];
+                    }
+                }
+            } else {
+                gridEl.classList.remove('peek-mode');
+                if (step === 0) gridEl.classList.add('mystery-mode'); 
+                for(let r=0; r<GRID_SIZE; r++) {
+                    for(let c=0; c<GRID_SIZE; c++) {
+                        const input = document.getElementById(`in-${r}-${c}`);
+                        input.value = step === 0 ? '?' : (input.dataset.userVal || '');
+                    }
+                }
+            }
+        }
+
+        function startScan() {
+            if (!targetData) {
+                let hasData = false;
+                for(let r=0; r<GRID_SIZE; r++) for(let c=0; c<GRID_SIZE; c++) if(gridData[r][c] > 0) hasData = true;
+                if(hasData) { targetData = JSON.parse(JSON.stringify(gridData)); } 
+                else { return; }
+            }
+            step = 1; userHistory = [];
+            document.getElementById('setup-controls').classList.add('hidden');
+            document.getElementById('scan-controls').classList.remove('hidden');
+            document.getElementById('peek-btn').classList.add('hidden'); 
+            document.getElementById('grid').classList.remove('mystery-mode');
+            for(let r=0; r<GRID_SIZE; r++) {
+                for(let c=0; c<GRID_SIZE; c++) {
+                    gridData[r][c] = 0;
+                    const input = document.getElementById(`in-${r}-${c}`);
+                    input.value = ''; input.parentElement.className = 'data-cell';
+                }
+            }
+            startTimer();
+            renderStep();
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('timer-val').innerText = `${Math.floor(elapsed / 60).toString().padStart(2, '0')}:${(elapsed % 60).toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function nextStep() {
+            userHistory.push(JSON.parse(JSON.stringify(gridData)));
+            if(step < 4) { 
+                step++; 
+                renderStep(); 
+            } else { 
+                showFinalReport(); 
+            }
+        }
+
+        function calculateMetrics(pGrid, pTarget) {
+            if(!pTarget) return { acc: 0, totalDiff: 0, rmsd: 0 };
+            let totalDiff = 0, totalMass = 0, sqDiffSum = 0;
+            for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
+                const diff = Math.abs(pGrid[r][c] - pTarget[r][c]);
+                totalDiff += diff;
+                sqDiffSum += diff * diff;
+                totalMass += pTarget[r][c];
+            }
+            const rmsdValue = Math.sqrt(sqDiffSum / 16);
+            const rmsd = rmsdValue.toFixed(2);
+            const acc = totalMass === 0 ? 0 : Math.max(0, 100 - (totalDiff / totalMass * 100)).toFixed(1);
+            return { acc, totalDiff, rmsd };
+        }
+
+        function updateMetrics() {
+            const metrics = calculateMetrics(gridData, targetData);
+            document.getElementById('error-val').innerText = metrics.acc + "%";
+        }
+
+        function getProjections(data) {
+            const p = { d0: [0,0,0,0], d45: Array(7).fill(0), d90: [0,0,0,0], d135: Array(7).fill(0) };
+            if(!data) return p;
+            for(let r=0; r<4; r++) {
+                for(let c=0; c<4; c++) {
+                    const v = data[r][c];
+                    p.d0[c] += v; p.d90[r] += v;
+                    p.d45[r+c] += v; p.d135[r-c+3] += v;
+                }
+            }
+            return p;
+        }
+
+        function renderStep() {
+            const sCont = document.getElementById('sensor-container'), gLayer = document.getElementById('guide-layer');
+            sCont.innerHTML = ''; gLayer.innerHTML = '';
+            const displayAngles = ["0°", "45°", "90°", "135°"];
+            
+            if (step === 0) return;
+            
+            document.getElementById('angle-tag').innerText = displayAngles[step-1];
+            if(step === 4) { 
+                document.getElementById('btn-text').innerText = "진단 결과 리포트 보기"; 
+            }
+
+            const rect = document.getElementById('grid').getBoundingClientRect(), vp = document.getElementById('viewport').getBoundingClientRect();
+            const midX = rect.left + rect.width / 2 - vp.left, midY = rect.top + rect.height / 2 - vp.top;
+            const projections = getProjections(gridData), targets = getProjections(targetData), baseRadius = Math.max(rect.width * 0.75, 140);
+
+            for(let s = 1; s <= step; s++) {
+                let data, target, angle, theme;
+                if(s===1) { data=projections.d0; target=targets.d0; angle=0; theme='theme-0'; }
+                if(s===2) { data=projections.d45; target=targets.d45; angle=45; theme='theme-45'; }
+                if(s===3) { data=projections.d90; target=targets.d90; angle=90; theme='theme-90'; }
+                if(s===4) { data=projections.d135; target=targets.d135; angle=135; theme='theme-135'; }
+
+                for(let i=0; i<data.length; i++) {
+                    let start, end;
+                    if(angle === 0) {
+                        const x = (rect.left-vp.left) + (rect.width/4)*(i+0.5);
+                        start = { x, y: (rect.top-vp.top) - baseRadius }; end = { x, y: (rect.bottom-vp.top) + 20 };
+                    } else if(angle === 90) {
+                        const y = (rect.top-vp.top) + (rect.height/4)*(i+0.5);
+                        start = { x: (rect.right-vp.left) + baseRadius, y }; end = { x: (rect.left-vp.left) - 20, y };
+                    } else {
+                        const rad = (angle === 45 ? -45 : 45) * Math.PI / 180, spacing = rect.width / 5.2, off = (i - (data.length-1)/2) * spacing, diagRadius = baseRadius + 15;
+                        start = { x: midX + off * Math.cos(rad + Math.PI/2) + diagRadius * Math.cos(rad), y: midY + off * Math.sin(rad + Math.PI/2) + diagRadius * Math.sin(rad) };
+                        end = { x: midX + off * Math.cos(rad + Math.PI/2) - (diagRadius * 0.1) * Math.cos(rad), y: midY + off * Math.sin(rad + Math.PI/2) - (diagRadius * 0.1) * Math.sin(rad) };
+                    }
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", start.x); line.setAttribute("y1", start.y);
+                    line.setAttribute("x2", end.x); line.setAttribute("y2", end.y);
+                    line.setAttribute("class", `scan-line ${theme} ${s===step ? 'active' : ''}`);
+                    gLayer.appendChild(line);
+                    const div = document.createElement('div');
+                    div.className = `sensor ${theme} ${s===step ? 'active' : ''}`;
+                    div.style.left = `${start.x - 21}px`; div.style.top = `${start.y - 21}px`;
+                    div.innerHTML = `<span class="t-val">${target[i]}</span><span class="c-val ${data[i]===target[i]?'correct':'wrong'}">${data[i]}</span>`;
+                    sCont.appendChild(div);
+                }
+            }
+        }
+
+        function showFinalReport() {
+            clearInterval(timerInterval);
+            const finalMetrics = calculateMetrics(gridData, targetData);
+            document.getElementById('final-accuracy').innerText = finalMetrics.acc + "%";
+            document.getElementById('final-time').innerText = document.getElementById('timer-val').innerText;
+
+            const stages = ["0° Only", "0°+45°", "0°+45°+90°", "Full 135° Final"];
+            
+            // 타임라인 데이터 구성
+            const timelineHtml = userHistory.map((hData, idx) => {
+                const metrics = calculateMetrics(hData, targetData);
+                let gridHtml = '';
+                for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
+                    gridHtml += `<div class="micro-cell ${getHeatmapClass(hData[r][c])}">${hData[r][c]>0?hData[r][c]:''}</div>`;
+                }
+                return `
+                <div class="flex flex-col items-center gap-1 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                    <div class="micro-grid">${gridHtml}</div>
+                    <span class="text-[9px] font-bold text-slate-500 mt-1">${stages[idx]}</span>
+                    <span class="text-[10px] font-black text-blue-600">${metrics.acc}%</span>
+                </div>`;
+            }).join('');
+            document.getElementById('history-container').innerHTML = timelineHtml;
+
+            // 상세 수치 테이블 렌더링
+            const tableHtml = userHistory.map((hData, idx) => {
+                const m = calculateMetrics(hData, targetData);
+                return `
+                <tr>
+                    <td class="text-slate-600 font-bold">${stages[idx]}</td>
+                    <td class="text-rose-500">-${m.totalDiff} pts</td>
+                    <td class="text-slate-400">${m.rmsd}</td>
+                    <td class="text-blue-600 font-black">${m.acc}%</td>
+                </tr>
+                `;
+            }).join('');
+            document.getElementById('stat-table-body').innerHTML = tableHtml;
+
+            createMiniGrid('mini-target-grid', targetData);
+            createMiniGrid('mini-user-grid', gridData);
+            document.getElementById('report-overlay').style.display = 'flex';
+        }
+
+        function createMiniGrid(id, data) {
+            const cont = document.getElementById(id); cont.innerHTML = '';
+            for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
+                const val = data[r][c], cell = document.createElement('div');
+                cell.className = `mini-cell ${getHeatmapClass(val)}`;
+                if(id === 'mini-user-grid' && val !== targetData[r][c]) cell.classList.add('cell-error');
+                cell.innerText = val > 0 ? val : ''; cont.appendChild(cell);
+            }
+        }
+
+        window.addEventListener('resize', renderStep);
+        init();
+    </script>
 </body>
 </html>
