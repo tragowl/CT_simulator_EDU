@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CT 영상분석원리 시뮬레이터 v13.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>CT 영상분석원리 시뮬레이터 v13.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Inter:wght@400;600;700;900&display=swap');
@@ -13,14 +13,17 @@
             --cell-size: clamp(35px, 7vw, 50px);
         }
 
+        /* 모바일 전체 높이 대응 */
         html, body {
-            height: 100%; margin: 0; padding: 0; overflow: hidden;
+            height: 100dvh; margin: 0; padding: 0; overflow: hidden;
             background-color: var(--bg-main);
             touch-action: manipulation;
             color: #0f172a; font-family: 'Inter', sans-serif;
+            display: flex; flex-direction: column;
         }
 
         .app-header {
+            flex-shrink: 0;
             padding: 12px 20px; background: #fff; border-bottom: 2px solid #e2e8f0;
             display: flex; justify-content: space-between; align-items: center; z-index: 100;
         }
@@ -30,10 +33,15 @@
             letter-spacing: -0.01em;
         }
 
+        /* 메인 영역이 유연하게 늘어나도록 수정 */
         .main-body { 
-            flex: 1; position: relative; display: flex;
-            align-items: center; justify-content: center; overflow: hidden;
-            height: calc(100vh - 160px);
+            flex: 1; 
+            position: relative; 
+            display: flex;
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden;
+            min-height: 0; /* flex 자식 오버플로우 방지 */
         }
 
         .grid-container {
@@ -74,10 +82,16 @@
         .correct { color: #10b981 !important; }
         .wrong { color: #ef4444 !important; }
 
-        .app-footer { padding: 16px 20px; background: #fff; border-top: 2px solid #e2e8f0; z-index: 100; }
+        .app-footer { 
+            flex-shrink: 0;
+            padding: 16px 20px; 
+            padding-bottom: calc(16px + env(safe-area-inset-bottom)); /* 아이폰 하단 홈바 대응 */
+            background: #fff; 
+            border-top: 2px solid #e2e8f0; 
+            z-index: 100; 
+        }
         .btn-action { @apply py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 shadow-md; }
 
-        /* 레포트 오버레이 스타일 */
         #report-overlay {
             position: fixed; inset: 0; background: #f1f5f9; z-index: 500;
             display: none; flex-direction: column; overflow-y: auto; padding-bottom: 50px;
@@ -91,13 +105,13 @@
 
     <header class="app-header">
         <div class="flex flex-col">
-            <h1 class="text-lg font-black italic tracking-tighter text-slate-800">CT PERSISTENT SCAN v13.0</h1>
+            <h1 class="text-lg font-black italic tracking-tighter text-slate-800">CT PERSISTENT SCAN v13.1</h1>
             <div class="copyright-tag">
                 © 2026. All Rights Reserved. <br>
-                Developer: [Kim Hyun Seok] | tragowl@onedu.jje.go.kr
+                Developer: Kim Hyun Seok | tragowl@onedu.jje.go.kr
             </div>
         </div>
-        <div class="flex gap-6">
+        <div class="flex gap-4">
             <div class="text-right">
                 <span id="timer-val" class="text-xl font-black font-mono text-slate-700">00:00</span>
                 <span class="block text-[8px] text-slate-400 font-bold uppercase">Time</span>
@@ -118,19 +132,19 @@
     </div>
 
     <footer class="app-footer">
-        <div id="setup-controls" class="flex gap-4">
-            <button id="peek-btn" class="w-16 h-16 flex items-center justify-center bg-white border-2 border-slate-200 text-slate-400 rounded-2xl hidden" 
+        <div id="setup-controls" class="flex gap-3">
+            <button id="peek-btn" class="w-14 h-14 flex items-center justify-center bg-white border-2 border-slate-200 text-slate-400 rounded-xl hidden" 
                 onmousedown="peekAnswer(true)" onmouseup="peekAnswer(false)" 
                 ontouchstart="peekAnswer(true)" ontouchend="peekAnswer(false)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
             <button onclick="generateRandomData()" class="btn-action bg-slate-100 border-2 border-slate-200 text-slate-700 flex-1">랜덤 생성</button>
             <button onclick="startScan()" class="btn-action bg-blue-600 text-white flex-[2]">스캔 시작</button>
         </div>
         <div id="scan-controls" class="hidden">
-            <button id="main-action-btn" onclick="nextStep()" class="btn-action bg-slate-800 text-white w-full flex justify-between px-8 items-center">
+            <button id="main-action-btn" onclick="nextStep()" class="btn-action bg-slate-800 text-white w-full flex justify-between px-6 items-center">
                 <span id="btn-text" class="font-black text-lg">다음 각도 추가</span>
-                <span id="angle-tag" class="bg-blue-500 text-white px-4 py-1.5 rounded-xl text-sm font-mono">0°</span>
+                <span id="angle-tag" class="bg-blue-500 text-white px-3 py-1 rounded-lg text-xs font-mono">0°</span>
             </button>
         </div>
     </footer>
@@ -138,45 +152,41 @@
     <!-- 상세 분석 레포트 오버레이 -->
     <div id="report-overlay">
         <div class="max-w-2xl mx-auto w-full px-6 py-10">
-            <div class="text-center mb-10">
-                <h2 class="text-4xl font-black italic text-slate-800 mb-2">DIAGNOSTIC REPORT</h2>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Advanced CT Image Reconstruction Analysis</p>
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-black italic text-slate-800 mb-1">DIAGNOSTIC REPORT</h2>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Advanced CT Image Reconstruction Analysis</p>
             </div>
 
-            <!-- 핵심 요약 카드 -->
-            <div class="bg-white rounded-[40px] p-8 shadow-xl border-4 border-slate-50 mb-8">
-                <div class="flex justify-between items-end border-b-2 border-slate-50 pb-6 mb-6">
+            <div class="bg-white rounded-[32px] p-6 shadow-xl border-2 border-slate-100 mb-6">
+                <div class="flex justify-between items-end border-b border-slate-50 pb-4 mb-6">
                     <div>
-                        <span id="final-accuracy" class="text-7xl font-black text-blue-600">0%</span>
-                        <p class="text-[11px] font-black text-slate-400 uppercase mt-2">최종 복원 정확도</p>
+                        <span id="final-accuracy" class="text-6xl font-black text-blue-600">0%</span>
+                        <p class="text-[10px] font-black text-slate-400 uppercase mt-1">최종 복원 정확도</p>
                     </div>
                     <div class="text-right">
-                        <div id="final-time" class="text-2xl font-black text-slate-700">00:00</div>
-                        <p class="text-[11px] font-black text-slate-400 uppercase">소요 시간</p>
+                        <div id="final-time" class="text-xl font-black text-slate-700">00:00</div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase">소요 시간</p>
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-8">
+                <div class="grid grid-cols-2 gap-4">
                     <div class="flex flex-col items-center">
-                        <span class="text-[10px] font-black text-slate-400 uppercase mb-3">원본 데이터(Target)</span>
-                        <div id="mini-target-grid" class="mini-grid" style="grid-template-columns: repeat(4, 32px); gap: 4px;"></div>
-                        <div class="mt-2 text-xs font-bold text-slate-500">Total Sum: <span id="stat-target-sum">0</span></div>
+                        <span class="text-[9px] font-black text-slate-400 uppercase mb-2">원본 데이터</span>
+                        <div id="mini-target-grid" class="mini-grid" style="grid-template-columns: repeat(4, 28px); gap: 3px;"></div>
+                        <div class="mt-2 text-[10px] font-bold text-slate-500">Sum: <span id="stat-target-sum">0</span></div>
                     </div>
                     <div class="flex flex-col items-center">
-                        <span class="text-[10px] font-black text-slate-400 uppercase mb-3">복원 데이터(Result)</span>
-                        <div id="mini-user-grid" class="mini-grid" style="grid-template-columns: repeat(4, 32px); gap: 4px;"></div>
-                        <div class="mt-2 text-xs font-bold text-slate-500">오차 합계: <span id="stat-error-sum" class="text-red-500">0</span></div>
+                        <span class="text-[9px] font-black text-slate-400 uppercase mb-2">복원 데이터</span>
+                        <div id="mini-user-grid" class="mini-grid" style="grid-template-columns: repeat(4, 28px); gap: 3px;"></div>
+                        <div class="mt-2 text-[10px] font-bold text-slate-500">Error: <span id="stat-error-sum" class="text-red-500">0</span></div>
                     </div>
                 </div>
             </div>
 
-            <!-- 단계별 진화 히스토리 -->
-            <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 ml-2">Progressive Evolution History</h3>
-            <div id="history-container" class="space-y-4">
-                <!-- JS에서 단계별 카드 삽입 -->
-            </div>
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">Evolution History</h3>
+            <div id="history-container" class="space-y-3"></div>
 
-            <button onclick="location.reload()" class="btn-action bg-blue-600 text-white w-full text-lg mt-10">새로운 스캔 시작</button>
+            <button onclick="location.reload()" class="btn-action bg-blue-600 text-white w-full text-lg mt-8">새로운 스캔 시작</button>
         </div>
     </div>
 
@@ -186,7 +196,7 @@
         let gridData = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
         let targetData = null;
         let timerInterval, startTime;
-        let stepHistory = []; // 단계별 데이터 저장용
+        let stepHistory = [];
 
         function init() {
             const gridEl = document.getElementById('grid');
@@ -238,7 +248,6 @@
         }
 
         function nextStep() {
-            // 현재 상태 저장
             const snapshot = JSON.parse(JSON.stringify(gridData));
             const metrics = calculateMetrics(snapshot);
             stepHistory.push({
@@ -259,7 +268,7 @@
         function calculateMetrics(data) {
             let errorSum = 0, targetSum = 0;
             for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
-                errorSum += Math.abs(data[r][c] - targetData[r][c]);
+                errorSum += Math.abs((data[r][c] || 0) - targetData[r][c]);
                 targetSum += targetData[r][c];
             }
             const accuracy = targetSum === 0 ? 0 : Math.max(0, 100 - (errorSum / targetSum * 100)).toFixed(1);
@@ -296,7 +305,7 @@
                 if(s===4) { data=projections.d135; target=targets.d135; angleDeg=135; theme='theme-135'; }
 
                 const angleRad = (angleDeg - 90) * Math.PI / 180;
-                const orbitRadius = gridBox.width * (0.8 + (s * 0.4)); // 더 넓은 등차 간격
+                const orbitRadius = gridBox.width * (0.85 + (s * 0.35));
 
                 for(let i=0; i<data.length; i++) {
                     const count = data.length;
@@ -305,7 +314,6 @@
 
                     const sX = centerX + orbitRadius * Math.cos(angleRad) + offset * Math.cos(angleRad + Math.PI/2);
                     const sY = centerY + orbitRadius * Math.sin(angleRad) + offset * Math.sin(angleRad + Math.PI/2);
-                    
                     const eX = centerX - (orbitRadius * 0.9) * Math.cos(angleRad) + offset * Math.cos(angleRad + Math.PI/2);
                     const eY = centerY - (orbitRadius * 0.9) * Math.sin(angleRad) + offset * Math.sin(angleRad + Math.PI/2);
 
@@ -330,7 +338,7 @@
             const p = { d0: [0,0,0,0], d45: Array(7).fill(0), d90: [0,0,0,0], d135: Array(7).fill(0) };
             if(!d) return p;
             for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
-                const v = d[r][c]; 
+                const v = parseInt(d[r][c]) || 0; 
                 p.d0[c]+=v; p.d90[r]+=v; p.d45[r+c]+=v; p.d135[c-r+3]+=v;
             }
             return p;
@@ -342,34 +350,30 @@
             document.getElementById('final-accuracy').innerText = m.accuracy + "%";
             document.getElementById('final-time').innerText = document.getElementById('timer-val').innerText;
             document.getElementById('stat-target-sum').innerText = m.targetSum;
-            document.getElementById('stat-error-sum').innerText = m.errorScore;
+            document.getElementById('stat-error-sum').innerText = m.errorSum;
 
-            // 최종 그리드 렌더링
-            createMiniGrid('mini-target-grid', targetData, 32);
-            createMiniGrid('mini-user-grid', gridData, 32);
+            createMiniGrid('mini-target-grid', targetData, 28);
+            createMiniGrid('mini-user-grid', gridData, 28);
 
-            // 히스토리 렌더링
             const hCont = document.getElementById('history-container');
             hCont.innerHTML = '';
             stepHistory.forEach((step, idx) => {
                 const card = document.createElement('div');
                 card.className = 'history-card flex items-center justify-between';
-                
                 const gridId = `hist-grid-${idx}`;
                 card.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <div class="bg-slate-800 text-white w-10 h-10 rounded-full flex items-center justify-center font-black text-xs">${step.angle}</div>
+                    <div class="flex items-center gap-3">
+                        <div class="bg-slate-800 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-[10px]">${step.angle}</div>
                         <div id="${gridId}" class="mini-grid"></div>
                     </div>
                     <div class="text-right">
-                        <div class="text-xl font-black text-slate-800">${step.accuracy}%</div>
-                        <div class="text-[10px] font-bold text-slate-400 uppercase">오차점수: ${step.errorScore}</div>
+                        <div class="text-lg font-black text-slate-800">${step.accuracy}%</div>
+                        <div class="text-[9px] font-bold text-slate-400 uppercase">Error: ${step.errorScore}</div>
                     </div>
                 `;
                 hCont.appendChild(card);
-                createMiniGrid(gridId, step.data, 18);
+                createMiniGrid(gridId, step.data, 16);
             });
-
             document.getElementById('report-overlay').style.display = 'flex';
         }
 
@@ -380,7 +384,7 @@
                 const v = data[r][c_idx], div = document.createElement('div');
                 div.className = `mini-cell`;
                 div.style.width = `${size}px`; div.style.height = `${size}px`;
-                div.style.fontSize = `${size/2.5}px`;
+                div.style.fontSize = `${size/2.2}px`;
                 div.innerText = v || '0'; 
                 if(targetData && v !== targetData[r][c_idx]) div.style.color = '#ef4444';
                 c.appendChild(div);
